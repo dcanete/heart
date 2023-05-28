@@ -1,0 +1,258 @@
+---
+title: 'Práctica 2: ¿Cómo realizar la limpieza y análisis de datos?'
+author: "Balpreet Kaur Singh/Daniel Cañete Román"
+tuthor: "María Isabel Guitart Hormigo"
+date: '`r format(Sys.Date(),"%e de %B %Y")`'
+output:
+  html_document:
+    toc: yes
+#    number_sections: yes
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Planificación
+
+Trabajamos por GIT.
+
+**Antes 28/5**. Reunión 17:00: Dani prepara rdm con esquema y notas de qué hacer en cada apartado.
+
+**Desde reunión hasta 2/6.** Balpreet rellena el rmd con notas, avanzando sobretodo en el código fuente. Reunión sincro 17:00
+
+**Desde reunión hasta 4/6**. Dani revisa textos y avances de Bapreet, incluyendo propuestas de cambio. Reunión sincro 17:00
+
+**Desde reunión hasta 7/6**. Balpreet rellena el rmd con notas, avanzando sobretodo en el código fuente. En la reunión debemos planificar la grabación del vídeo. Reunión sincro 17:00
+
+**Desde reunión hasta 8/6**. Dani hace un repaso dejando cerrado el rdm. Genera html, prepara carpetas, ...
+
+**12-16/6**. (pendiente de planificar) Grabación de vídeo.
+
+Nota: hay mucho código que se puede utilizar de ejemplo: <https://www.kaggle.com/datasets/rashikrahmanpritom/heart-attack-analysis-prediction-dataset/code?datasetId=1226038&sortBy=voteCount&language=R>
+
+Nota2: Hay pasos muy similares a la asignatura de minería de datos. He compartido mis PEC del semestre pasado.
+
+# 0. Introdución y pasos iniciales
+
+Esta práctica se ha realizado bajo el contexto de la asignatura **Tipología y ciclo de vida de los datos**, perteneciente al Máster en Ciencia de Datos de la Universitat Oberta de Catalunya. En ella, se aplican técnicas de **limpieza y análisis de datos** mediante el lenguaje de programación R.
+
+Para facilitar la lectura se incorpora parte del enunciado utilizando el formato blockquote
+
+Tras analizar el dataset resultante en la PRA1, se ha seleccionado el propuesto en el enunciado por tener mayor riqueza a nivel educativo.
+
+Antes de empezar con los apartados propuestos en el enunciado de la PRA, se realizan pasos previos necesarios: carga de datos y librerías utilizadas:
+
+```{r load_libraries, include=FALSE}
+# Librerías que se utilizan en el código
+if(!require('gt')) {install.packages('gt'); library('gt')}
+
+
+# Cargamos los datos
+ds<-read.csv("../data/heart.csv")
+```
+
+`Yo no pondría nada mas, salvo ir añadiendo librerías`
+
+# 1. Descripción del dataset
+
+> ¿Por qué es importante y qué pregunta/problema pretende responder?
+
+En primer lugar, se estudia la documentación disponible en <https://www.kaggle.com/datasets/rashikrahmanpritom/heart-attack-analysis-prediction-dataset> donde se puede apreciar:
+
+-   Se trata de un estudio ataques al corazon donde existen datos de de problemas de corazón donde se
+
+-   Licencia [CC0: Public Domain](https://creativecommons.org/publicdomain/zero/1.0/). Sin copyright, lo cual nos habilita a utilizarlo sin problemas.
+
+-   El dataset tiene las siguientes columnas:
+
+    -   Age: Edad del paciente
+
+    -   Sex : Sexo del paciente
+
+    -   exang: angina inducida por el ejercicio (1 = sí; 0 = no)
+
+    -   ca: número de venas principales (0-3)
+
+    -   cp : Tipo de dolor torácico
+
+        -   Valor 1: angina típica
+
+        -   Valor 2: angina atípica
+
+        -   Valor 3: dolor no anginoso
+
+        -   Valor 4: asintomático
+
+    -   trtbps: presión arterial en reposo (en mm Hg)
+
+    -   chol: colesterol en mg/dl obtenido a través del sensor BMI
+
+    -   fbs: azúcar en sangre en ayunas \> 120 mg/dl (1 = verdadero; 0 = falso)
+
+    -   rest_ecg : resultados electrocardiográficos en reposo
+
+        -   Valor 0: normal
+
+        -   Valor 1: tener anomalías en la onda ST-T (inversiones de la onda T y/o elevación o depresión del ST \> 0,05 mV)
+
+        -   Valor 2: mostrar hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes
+
+    -   thalach: frecuencia cardíaca máxima alcanzada
+
+    -   target: 0= menos posibilidades de ataque al corazón 1= más posibilidades de ataque al corazón
+
+Corroboremos estos datos e indaguemos un poco más:
+
+```{r}
+head(ds) %>% gt()
+summary (ds)
+str(ds)
+print ("Valores ausentes:")
+colSums(is.na(ds))
+print("Cadenas vacías")
+colSums(ds=="")
+print (paste (nrow(ds) , " observaciones")) 
+print ("Valores diferentes de cp: ")
+unique (ds$cp)
+print ("Valores diferentes de restecg: ")
+unique (ds$restecg)
+print ("Valores diferentes de slp: ")
+unique (ds$slp)
+print ("Valores diferentes de caa: ")
+unique (ds$caa)
+print ("Valores diferentes de thall: ")
+unique (ds$thall)
+
+```
+
+Hay 303 observaciones, inicialmente no parece que haya valores ausentes.
+
+Los campos no son exactamente como aparece en la documentación, pero se puede encontrar una descripción más actualizada en <https://www.kaggle.com/code/namanmanchanda/heart-attack-eda-prediction-90-accuracy>:
+
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| Campo    | Descripción                                                                                                            | Tipo                                              |
++==========+========================================================================================================================+===================================================+
+| age      | Edad del paciente                                                                                                      | int (29-77)                                       |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| sex      | Sexo del paciente                                                                                                      | int (0 ó 1). No se indica qué significa cada cuál |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| cp       | Tipo de dolor torácico                                                                                                 | int (0, 1, 2 ó 3)                                 |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 1: angina típica                                                                                             |                                                   |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 2: angina atípica                                                                                            |                                                   |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 3: dolor no anginoso                                                                                         |                                                   |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 4: asintomático                                                                                              |                                                   |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| trtbps   | Presión arterial en reposo (en mm Hg)                                                                                  | int (94-200)                                      |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| chol     | Colesterol en mg/dl obtenido a través del sensor BMI                                                                   | int (126-564)                                     |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| fbs      | Azúcar en sangre en ayunas \> 120 mg/dl (1 = verdadero; 0 = falso)                                                     | int (0 ó 1)                                       |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| restecg  | Electrocardiograma en reposo                                                                                           | int (0, 1 ó 2)                                    |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 0: normal                                                                                                    |                                                   |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 1: tener anomalías en la onda ST-T (inversiones de la onda T y/o elevación o depresión del ST \> 0,05 mV)    |                                                   |
+|          |                                                                                                                        |                                                   |
+|          | -   Valor 2: mostrar hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes              |                                                   |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| thalachh | Frecuencia cardíaca máxima alcanzada                                                                                   | int (71-202)                                      |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| exng     | Angina inducida por el ejercicio (1 = sí; 0 = no)                                                                      | int (0 ó 1)                                       |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| oldpeak  | Pico anterior                                                                                                          | num (0-6.2)                                       |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| slp      | Tendencia. Es una codificación, pero **no se conoce el significado** de cada valor.                                    | int (0, 1 ó 2)                                    |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| caa      | Número de venas principales (0-3)                                                                                      | int (0, 1, 2 ó 3)                                 |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| thall    | Resultado de la prueba de esfuerzo con talio. Es una codificación, pero **no se conoce el significado** de cada valor. | int (0, 1, 2 ó 3)                                 |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| output   | Variable objetivo. Es una codificación, no se conoce el significado de cada valor. Supuesto:                           | int (0 ó 1)                                       |
+|          |                                                                                                                        |                                                   |
+|          | -   0, no predispuesto                                                                                                 |                                                   |
+|          |                                                                                                                        |                                                   |
+|          | -   1, predispuesto                                                                                                    |                                                   |
++----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+
+**¿Por qué es importante y qué pregunta/problema pretende responder?**
+
+Ahora conocemos un poco mejor los datos, podemos responder a la pregunta. Se trata de un dataset con información clínica de pacientes que están predispuestos o no a tener una angina de pecho. Evidentemente es muy interesante para crear un modelo predictivo, pero también para conocer qué variables hacen que una persona tenga más posibilidades de padecer una angina de pecho.
+
+**Nota**: Hay algunos campos que no conocemos su significado, pero aún así se pueden utilizar para el modelo. Si se detectan que son variables relacionadas con la variable objetivo, un experto puede describir su significado.
+
+# 2. Integración y selección
+
+> Integración y selección de los datos de interés a analizar. Puede ser el resultado de adicionar diferentes datasets o una subselección útil de los datos originales, en base al objetivo que se quiera conseguir.
+
+La muestra no tiene un número elevado de registros que puedan dar problemas en el rendimiento.
+
+Si hay un número elevado de campos que es posible que tengamos que limitar.
+
+```{r}
+# Cambio de tipo variables clasificatorias
+ds$sex <- as.factor(ds$sex)
+ds$cp <- as.factor(ds$cp)
+ds$fbs <- as.factor(ds$fbs)
+ds$restecg <- as.factor(ds$restecg)
+ds$exng <- as.factor(ds$exng)
+ds$slp <- as.factor(ds$slp)
+ds$caa <- as.factor(ds$caa)
+ds$thall <- as.factor(ds$thall)
+ds$output <- as.factor(ds$output)
+
+# Cambio de variables numericas
+ds$age <- as.numeric (ds$age)
+ds$trtbps <- as.numeric (ds$trtbps)
+ds$chol <- as.numeric (ds$chol)
+ds$thalachh <- as.numeric (ds$thalachh)
+ds$oldpeak <- as.numeric (ds$oldpeak)
+
+# Ordenación de los campos (objetivo, clasificatorias y numéricas)
+ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "thall", "age", "trtbps", "chol", "thalachh", "oldpeak")]
+
+```
+
+# 3. Limpieza de los datos
+
+`Ver PECs mineria de datos`
+
+## 3.1. ¿Los datos contienen ceros o elementos vacíos? Gestiona cada uno de estos casos
+
+## 3.2. Identifica y gestiona los valores extremos
+
+# 4. Análisis de los datos
+
+`La solucion oficial de la PEC2 puede venir muy bien para esto. Sale el día 2/6`
+
+## 4.1. Selección de los grupos de datos 
+
+> Selección de los grupos de datos que se quieren analizar/comparar (p. ej., si se van a comparar grupos de datos, ¿cuáles son estos grupos y qué tipo de análisis se van a aplicar?)
+
+## 4.2. Comprobación de la normalidad y homogeneidad de la varianza.
+
+## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos.
+
+> En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
+
+# 5. Representación de los resultados 
+
+> Representación de los resultados a partir de tablas y gráficas. Este apartado se puede responder a lo largo de la práctica, sin necesidad de concentrar todas las representaciones en este punto de la práctica.
+
+# 6. Resolución del problema
+
+> A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+
+# 7. Código
+
+> Hay que adjuntar el código, preferiblemente en R, con el que se ha realizado la limpieza, análisis y representación de los datos. Si lo preferís, también podéis trabajar en Python.
+
+# 8. Vídeo
+
+> Realizar un breve vídeo explicativo de la práctica (máximo 10 minutos), donde ambos integrantes del equipo expliquen con sus propias palabras el desarrollo de la práctica, basándose en las preguntas del enunciado para justificar y explicar el código desarrollado. Este vídeo se deberá entregar a través de un enlace al Google Drive de la UOC ([https://drive.google.com/...),](https://drive.google.com/…),) junto con enlace al repositorio Git entregado.

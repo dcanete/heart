@@ -231,7 +231,7 @@ ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "t
 
 `La solucion oficial de la PEC2 puede venir muy bien para esto. Sale el día 2/6`
 
-## 4.1. Selección de los grupos de datos 
+## 4.1. Selección de los grupos de datos
 
 > Selección de los grupos de datos que se quieren analizar/comparar (p. ej., si se van a comparar grupos de datos, ¿cuáles son estos grupos y qué tipo de análisis se van a aplicar?)
 
@@ -241,7 +241,7 @@ ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "t
 
 > En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
 
-# 5. Representación de los resultados 
+# 5. Representación de los resultados
 
 > Representación de los resultados a partir de tablas y gráficas. Este apartado se puede responder a lo largo de la práctica, sin necesidad de concentrar todas las representaciones en este punto de la práctica.
 

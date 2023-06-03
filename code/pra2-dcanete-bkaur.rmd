@@ -20,7 +20,7 @@ Trabajamos por GIT.
 
 **Antes 28/5**. Reunión 17:00: Dani prepara rdm con esquema y notas de qué hacer en cada apartado.
 
-**Desde reunión hasta 2/6.** Balpreet rellena el rmd con notas, avanzando sobretodo en el código fuente. Reunión sincro 17:00
+**Desde reunión hasta 2/6.** Balpreet rellena el rmd con notas, avanzando sobretodo en el código fuente. Reunión sincro 17:00 -\> No celebrada
 
 **Desde reunión hasta 4/6**. Dani revisa textos y avances de Bapreet, incluyendo propuestas de cambio. Reunión sincro 17:00
 
@@ -47,6 +47,7 @@ Antes de empezar con los apartados propuestos en el enunciado de la PRA, se real
 ```{r load_libraries, include=FALSE}
 # Librerías que se utilizan en el código
 if(!require('gt')) {install.packages('gt'); library('gt')}
+if(!require("corrplot")) install.packages("corrplot"); library("corrplot")
 
 
 # Cargamos los datos
@@ -131,55 +132,63 @@ Hay 303 observaciones, inicialmente no parece que haya valores ausentes.
 
 Los campos no son exactamente como aparece en la documentación, pero se puede encontrar una descripción más actualizada en <https://www.kaggle.com/code/namanmanchanda/heart-attack-eda-prediction-90-accuracy>:
 
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| Campo    | Descripción                                                                                                            | Tipo                                              |
-+==========+========================================================================================================================+===================================================+
-| age      | Edad del paciente                                                                                                      | int (29-77)                                       |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| sex      | Sexo del paciente                                                                                                      | int (0 ó 1). No se indica qué significa cada cuál |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| cp       | Tipo de dolor torácico                                                                                                 | int (0, 1, 2 ó 3)                                 |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 1: angina típica                                                                                             |                                                   |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 2: angina atípica                                                                                            |                                                   |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 3: dolor no anginoso                                                                                         |                                                   |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 4: asintomático                                                                                              |                                                   |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| trtbps   | Presión arterial en reposo (en mm Hg)                                                                                  | int (94-200)                                      |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| chol     | Colesterol en mg/dl obtenido a través del sensor BMI                                                                   | int (126-564)                                     |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| fbs      | Azúcar en sangre en ayunas \> 120 mg/dl (1 = verdadero; 0 = falso)                                                     | int (0 ó 1)                                       |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| restecg  | Electrocardiograma en reposo                                                                                           | int (0, 1 ó 2)                                    |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 0: normal                                                                                                    |                                                   |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 1: tener anomalías en la onda ST-T (inversiones de la onda T y/o elevación o depresión del ST \> 0,05 mV)    |                                                   |
-|          |                                                                                                                        |                                                   |
-|          | -   Valor 2: mostrar hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes              |                                                   |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| thalachh | Frecuencia cardíaca máxima alcanzada                                                                                   | int (71-202)                                      |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| exng     | Angina inducida por el ejercicio (1 = sí; 0 = no)                                                                      | int (0 ó 1)                                       |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| oldpeak  | Pico anterior                                                                                                          | num (0-6.2)                                       |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| slp      | Tendencia. Es una codificación, pero **no se conoce el significado** de cada valor.                                    | int (0, 1 ó 2)                                    |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| caa      | Número de venas principales (0-3)                                                                                      | int (0, 1, 2 ó 3)                                 |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| thall    | Resultado de la prueba de esfuerzo con talio. Es una codificación, pero **no se conoce el significado** de cada valor. | int (0, 1, 2 ó 3)                                 |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| output   | Variable objetivo. Es una codificación, no se conoce el significado de cada valor. Supuesto:                           | int (0 ó 1)                                       |
-|          |                                                                                                                        |                                                   |
-|          | -   0, no predispuesto                                                                                                 |                                                   |
-|          |                                                                                                                        |                                                   |
-|          | -   1, predispuesto                                                                                                    |                                                   |
-+----------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| Campo      | Descripción                                                                                                            | Tipo                                              |
++============+========================================================================================================================+===================================================+
+| age        | Edad del paciente                                                                                                      | int (29-77)                                       |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| sex        | Sexo del paciente                                                                                                      | int (0 ó 1). No se indica qué significa cada cuál |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| cp         | Tipo de dolor torácico                                                                                                 | int (0, 1, 2 ó 3)                                 |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 1: angina típica                                                                                             |                                                   |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 2: angina atípica                                                                                            |                                                   |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 3: dolor no anginoso                                                                                         |                                                   |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 4: asintomático                                                                                              |                                                   |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| trtbps     | Presión arterial en reposo (en mm Hg)                                                                                  | int (94-200)                                      |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| chol       | Colesterol en mg/dl obtenido a través del sensor BMI                                                                   | int (126-564)                                     |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| fbs        | Azúcar en sangre en ayunas \> 120 mg/dl (1 = verdadero; 0 = falso)                                                     | int (0 ó 1)                                       |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| restecg    | Electrocardiograma en reposo                                                                                           | int (0, 1 ó 2)                                    |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 0: normal                                                                                                    |                                                   |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 1: tener anomalías en la onda ST-T (inversiones de la onda T y/o elevación o depresión del ST \> 0,05 mV)    |                                                   |
+|            |                                                                                                                        |                                                   |
+|            | -   Valor 2: mostrar hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes              |                                                   |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| thalachh   | Frecuencia cardíaca máxima alcanzada                                                                                   | int (71-202)                                      |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| exng       | Angina inducida por el ejercicio (1 = sí; 0 = no)                                                                      | int (0 ó 1)                                       |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| oldpeak    | Pico anterior                                                                                                          | num (0-6.2)                                       |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| slp        | Tendencia. Es una codificación, pero **no se conoce el significado** de cada valor.                                    | int (0, 1 ó 2)                                    |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| caa        | Número de venas principales (0-3)                                                                                      | int (0, 1, 2 ó 3)                                 |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| thall      | Resultado de la prueba de esfuerzo con talio. Es una codificación, pero **no se conoce el significado** de cada valor. | int (0, 1, 2 ó 3)                                 |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+| output     | Variable objetivo. Es una codificación, no se conoce el significado de cada valor. Supuesto:                           | int (0 ó 1)                                       |
+|            |                                                                                                                        |                                                   |
+|            | -   0, no predispuesto                                                                                                 |                                                   |
+|            |                                                                                                                        |                                                   |
+|            | -   1, predispuesto                                                                                                    |                                                   |
++------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
+
+Vemos que tenemos:
+
+-   Una variable objetivo categórica: output
+
+-   Variables categóricas: sex, cp, fbs, restecg, exng, slp, caa y thall
+
+-   Variables numéricas: age, trtbps, chol, thalachh y oldpeak
 
 **¿Por qué es importante y qué pregunta/problema pretende responder?**
 
@@ -219,17 +228,132 @@ ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "t
 
 ```
 
+Vamos a estudiar un poco más los campos categóricos comparándolos con la variable objetivo:
+
+```{r}
+
+histList<- list()
+
+
+for (i in 1:9) {
+  #plot (ds[i])
+  #ggp <- boxplot(ds[,i], horizontal = TRUE, xlab=names(news)[i])
+  #print (ggp)
+  #histList[[i]] <- ggp # añadimos cada plot a la lista vacía
+  #i <- 2
+  vName <- names(ds)[i]
+  val <- ds[, i]
+  myPlot <- ggplot(ds, aes(val, fill = output)) +
+    geom_bar() + labs(x = names(ds)[i], y = "Observaciones") +
+    guides(fill = guide_legend(title = "")) +
+    scale_fill_manual(values = c("black", "#008000")) +
+    theme(axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) + 
+    ggtitle(vName)
+  print (myPlot)
+  print (table(val, ds$output))
+}
+
+```
+
+Sorprende que hay más personas predispuestas de las que no (165/138). Eso hace pensar que **la muestra está sesgada**, seguramente se ha obtenido entre pacientes que tenían alguna patología. Por eso se considera que e**l estudio puede servir para detectar factores de riesgo, pero no se pueden sacar conclusiones a nivel de población general**,
+
+Se observan tambien algunos valores posibles de variables con muy pocas observaciones, por lo que será dificil que sean significativos en un modelo predictivo. Este es el caso, por ejemplo:
+
+-   4 venas principales en caa, donde hay solo 5 observaciones. De hecho, en la descripción no se contemplaba ese valor.
+
+-   0 en la prueba de esfuerzo, donde hay solo dos observaciones.
+
+-   2 en restecg (hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes) donde solo hay 4 observaciones.
+
+Estudiemos los valores numéricos:
+
+```{r}
+for(i in 10:14){
+  col <- names(ds)[i]
+  plot <- ggplot(ds, aes(x=output, y=ds[,i], fill=output)) +
+    geom_boxplot(alpha=0.5) +
+    labs(x = "output", y = names(ds)[i]) +
+    theme(legend.position="none") 
+  print (plot)
+  plot <- hist(ds[,i], main=col,
+    xlab="Observaciones",
+    col="blue",
+    freq=FALSE
+  )
+  # plot <- ggplot(data = ds, aes(x = ds$output, y=ds[,i])) + 
+  #   geom_point(color = "gray30") + geom_smooth(method = lm,color = "firebrick") + 
+  #   theme_bw() + xlab("Muertes") + ylab(col)
+  # print (plot)
+}
+
+```
+
+Al separar los diagramas de cajas segun la variable objetivo, ya se pueden intuir alguna conclusión de correlacion. Por ejemplo, parece que es más probable tener algun ataque al corazón (output = 1) cuando:
+
+-   Picos anteriores (oldpeak) cercano a 0
+
+-   Frecuencia cardiaca (thalachh) con valores altos (\>150)
+
+Estudiemos la correlación entre las variables. Si encontramos alguna muy relacionadas podemos quitarlas del modelo y reducir su complejidad:
+
+```{r}
+n = c("age", "trtbps", "chol", "thalachh", "oldpeak")
+factores= ds %>% select(all_of(n))
+res<-cor(factores)
+corrplot(res,method="color",tl.col="black", tl.srt=30, order = "AOE",
+number.cex=0.75,sig.level = 0.01, addCoef.col = "black")
+
+matriz <- cor (ds[,n])
+corrplot(matriz, type="upper", order="hclust", tl.col="black", tl.srt=45)
+
+```
+
+Observamos que no hay una alta correlación entre las variables por lo que no se recomienda prescindir de ninguna.
+
+```{r}
+# o2_saturation <- read.csv("../data//o2Saturation.csv")
+# o2_saturation.head()
+# ds$o2_Saturation = o2_saturation$X98.6
+# ha_df.head()
+```
+
 # 3. Limpieza de los datos
 
-`Ver PECs mineria de datos`
+> 3.1. ¿Los datos contienen ceros o elementos vacíos? Gestiona cada uno de estos casos
+>
+> 3.2. Identifica y gestiona los valores extremos
 
-## 3.1. ¿Los datos contienen ceros o elementos vacíos? Gestiona cada uno de estos casos
+En el punto anterior se ha analizado el dataset y observando los resultados, ya podemos obtener algunas conclusiones sin necesidad de desarrollar más código:
 
-## 3.2. Identifica y gestiona los valores extremos
+-   **No se aprecian valores ausentes**, muchas veces identificados por "na". A veces se identifican con '0', pero este valor en la mayoría de las variables tiene un significado concreto.
+
+-   La variable caa presenta 5 observaciones con valor "4", que no estaba entre las opciones que se indicaban en la descripción. Podrían ser candidatos a outliers, habría que consultar a un experto, pero viendo la descripción ("Número de venas principales"), parece un **valor extremo, pero no erroneo**. Se decide mantenerlo.
+
+-   En los diagramas de cajas, vemos varios valores fuera de los rangos normales. Estos son valores extremos que habría que consultar a un experto si es posible que fueran erróneos para descartarlos. Si sorprende mucho la **observación con colesterol mayor, que está muy separada de los rangos normales**.
+
+Vamos a gestionar el último caso:
+
+```{r}
+max(ds$chol)
+ds [ds$chol==max(ds$chol), ]
+
+# No tiene otros valores extremos, lo sustituimos por la media.
+ds [ds$chol==max(ds$chol), ]$chol <- mean (ds$chol)
+```
+
+Como no se han visto otros valores extremos, se considera que es una errata y se ajusta a la media. Se podría haber eliminado de la muestra, pero perderíamos datos y, al no haber otras valores extraños, se ha preferido mantener.
+
+Obviamente, en un caso real, esta decisión debería tomarse junto con un experto que determine si realmente es un valor erroneo o no. Este mismo ejercicio se debería hacer con otros valores extremos que hemos visto en otras variables decidiendo si:
+
+-   Se elimina de la muestra
+
+-   Se ajusta su valor a la media u otra variable estadística
+
+-   Se considera con valor ausente
 
 # 4. Análisis de los datos
 
-`La solucion oficial de la PEC2 puede venir muy bien para esto. Sale el día 2/6`
+`Pendiente: La solucion oficial de la PEC2 puede venir muy bien para esto. Sale el día 2/6`
 
 ## 4.1. Selección de los grupos de datos
 
@@ -245,14 +369,26 @@ ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "t
 
 > Representación de los resultados a partir de tablas y gráficas. Este apartado se puede responder a lo largo de la práctica, sin necesidad de concentrar todas las representaciones en este punto de la práctica.
 
+En el desarrollo del ejercicio se han ido utilizando diagramas representativos. Para seleccionar los más interesantes en cada caso, se ha utilizado como referencia la siguiente url: <https://www.data-to-viz.com/>
+
 # 6. Resolución del problema
 
 > A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
+
+`Pendiente`
 
 # 7. Código
 
 > Hay que adjuntar el código, preferiblemente en R, con el que se ha realizado la limpieza, análisis y representación de los datos. Si lo preferís, también podéis trabajar en Python.
 
+Disponible en este mismo fichero.
+
 # 8. Vídeo
 
 > Realizar un breve vídeo explicativo de la práctica (máximo 10 minutos), donde ambos integrantes del equipo expliquen con sus propias palabras el desarrollo de la práctica, basándose en las preguntas del enunciado para justificar y explicar el código desarrollado. Este vídeo se deberá entregar a través de un enlace al Google Drive de la UOC ([https://drive.google.com/...),](https://drive.google.com/…),) junto con enlace al repositorio Git entregado.
+
+Se puede visualizar en cualquiera de estas dos alternativas:
+
+-   Github: <https://github.com/dcanete/heart>
+
+-   Drive: <https://drive.google.com/open?id=1gko9Vw2D3FQP5aewnnfp-hPio-AZ70KZ>

@@ -51,7 +51,7 @@ if(!require("corrplot")) install.packages("corrplot"); library("corrplot")
 
 
 # Cargamos los datos
-ds<-read.csv("../data/heart.csv")
+ds<-read.csv("heart.csv")
 ```
 
 `Yo no pondría nada mas, salvo ir añadiendo librerías`
@@ -74,7 +74,7 @@ En primer lugar, se estudia la documentación disponible en <https://www.kaggle.
 
     -   exang: angina inducida por el ejercicio (1 = sí; 0 = no)
 
-    -   ca: número de venas principales (0-3)
+    -   ca: número de venas principales 
 
     -   cp : Tipo de dolor torácico
 
@@ -125,10 +125,17 @@ print ("Valores diferentes de caa: ")
 unique (ds$caa)
 print ("Valores diferentes de thall: ")
 unique (ds$thall)
+print ("Valores diferentes de sex: ")
+unique (ds$sex)
+print ("Valores diferentes de fbs: ")
+unique (ds$fbs)
+print ("Valores diferentes de exng: ")
+unique (ds$exng)
 
 ```
 
-Hay 303 observaciones, inicialmente no parece que haya valores ausentes.
+Hay 303 observaciones, inicialmente no hay valores ausentes. 
+Respecto los 0, estos son valores aceptables entre los valores disponibles de atributo. Es decir, los valores "0" no significan ausencia de valor para el atributo especifico.
 
 Los campos no son exactamente como aparece en la documentación, pero se puede encontrar una descripción más actualizada en <https://www.kaggle.com/code/namanmanchanda/heart-attack-eda-prediction-90-accuracy>:
 
@@ -194,7 +201,7 @@ Vemos que tenemos:
 
 Ahora conocemos un poco mejor los datos, podemos responder a la pregunta. Se trata de un dataset con información clínica de pacientes que están predispuestos o no a tener una angina de pecho. Evidentemente es muy interesante para crear un modelo predictivo, pero también para conocer qué variables hacen que una persona tenga más posibilidades de padecer una angina de pecho.
 
-**Nota**: Hay algunos campos que no conocemos su significado, pero aún así se pueden utilizar para el modelo. Si se detectan que son variables relacionadas con la variable objetivo, un experto puede describir su significado.
+**Nota**: Hay algunos campos que no conocemos su significado concreto, pero aún así se pueden utilizar para el modelo. Si se detectan que son variables relacionadas con la variable objetivo, un experto puede describir su significado.
 
 # 2. Integración y selección
 
@@ -228,6 +235,24 @@ ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "t
 
 ```
 
+```{r}
+
+#comprobamos y quitemos los duplicados:
+print("Numero de Rows Duplicados:")
+nrow(ds[duplicated(ds), ])
+
+#Quitar row duplicados:
+ds<-ds[!duplicated(ds), ]
+print("Comprobacion de Rows No Duplicados")
+nrow(ds[duplicated(ds), ])
+
+```
+
+Hablando de duplicado de row, aqui suponemos que los datos de una misma observación ha sido repetida. Por tanto, eliminamos de nuestros datos. 
+
+Pero también puede dar el caso en la realidad de que dos observaciones tengan exactamente los mismos datos. En este caso, lo dejariamos en nuestro dataset. Pero ahora para esta práctica, eliminaremos este row repetido al entender que este row ha sido repetido erroneamente. 
+
+
 Vamos a estudiar un poco más los campos categóricos comparándolos con la variable objetivo:
 
 ```{r}
@@ -255,7 +280,7 @@ for (i in 1:9) {
 
 ```
 
-Sorprende que hay más personas predispuestas de las que no (165/138). Eso hace pensar que **la muestra está sesgada**, seguramente se ha obtenido entre pacientes que tenían alguna patología. Por eso se considera que e**l estudio puede servir para detectar factores de riesgo, pero no se pueden sacar conclusiones a nivel de población general**,
+Sorprende que hay más personas predispuestas de las que no (164/138). Eso hace pensar que **la muestra está sesgada**, seguramente se ha obtenido entre pacientes que tenían alguna patología. Por eso se considera que **el estudio puede servir para detectar factores de riesgo, pero no se pueden sacar conclusiones a nivel de población general**,
 
 Se observan tambien algunos valores posibles de variables con muy pocas observaciones, por lo que será dificil que sean significativos en un modelo predictivo. Este es el caso, por ejemplo:
 
@@ -265,9 +290,32 @@ Se observan tambien algunos valores posibles de variables con muy pocas observac
 
 -   2 en restecg (hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes) donde solo hay 4 observaciones.
 
+
+Balpreet: 
+
+- Vemos que tenemos más casos de personas que tienen más probabilidad de tener el ataque cardiaco. Concretamente, tenemos 164 casos de personas que tienen más probabilidad de tener el ataque cardiaco y tenemos 138 casos de personas quienes tienen menos probabilidad.
+
+- Visualizando la grafica y las cantidades numericas del sexo, vemos que tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 que tienen ataque cardiaco.Y 92 casos de los 206 tienen ataque cardiaco.
+
+- Visualizando la grafica y las cantidades numericas del cp, vemos que tenemos un total de 143 personas de cp tipo "0" (no padecen ningun tipo de Chest Pain listados), de los cuales 39 tienen ataque cardiaco. Después tenemos  50 personas de sexo tipo "1" (los cuales padecen dolor típico de angina), entre los cuales 41 son personas que padecen ataque cardiaco. Tenemos  86 personas de sexo tipo "2" (los cuales padecen dolor no anginoso), entre los cuales 68 son personas que padecen ataque cardiaco. Y por último, de las 32 personas que padecen dolor de pecho son debido a dolores asintomático, solamente 16 padecen ataque cardiaco.
+
+Respecto fbs, el cual significa fasting blood sugar (glucemia en ayunas), podemos decir que 54,86% (141/(116+141)) de las personas no padecen glucemia en ayunas tengan ataque cardiaco. En cambio, el porcentaje de tener el ataque cardiaco baja a 51,11% (23/(22+23)) para las personas que padecen glucemia en ayunas. Y sumando las 2 categorias, tenemos que la probabilidad de tener ataque cardiaco es 54,3% ((141+23)/(302)) independientemente de si la persona ha tenido glucemia en ayunas o no. Por tanto, en resumen, las personas que no padecen glucemis en ayunas tienen mas probabilidad de tener un ataque cardiaco.
+
+Respecto restecg, el cual significa resultados electrocardiográficos en reposo, podemos decir que 46,25% (68/(68+79)) de las personas que tienen un resultado electrocardiográficos en reposo NORMAL pueden padecer un ataque cardiaco. Y este porcentaje sube a 62,91% en el caso de personas con anomalía en la onda ST-T. Y es 25% la probabilidad de que una persona que muestra hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes padezca un ataque cardiaco. Y sumando ((68+95+1)/(79+68+56+95+3+1)), como esperamos, hay una probabilidad de 54,3% de que una persona padezca un ataque cardiaco independientemente de tipo de resultados electrocardiográficos en reposo. En resumen, hay más probabilidad de que una persona con anomalía en la onda ST-T padezca un ataque cardiaco comparado a las 2 otros tipos de resultados electrocardiográficos en reposo. Y podemos decir de que es mas probable de una una persona con resultado NORMAL padezca un ataque cardiaco que una persona que muestre hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes.
+
+
+Respecto variable exng que significa angina inducida por el ejercicio (exercise induced angina), podemos decir 69,45% de los casos de personas de tener angina no inducida por el ejercicio tienen ataque cardiaco. En cambio, si hablamos de personas con angina inducida por el ejecicio, este porcentaje de padecer el ataque cardiaco baja a 23%. Claramente analizamos que las personas con angina no inducida por el ejercicio es mas que doble de probable que la persona con angina inducida por ejercicio.
+
+Respecto la variable slp, habla de "slope" pero sin especificar el significado concreto de esta variable concreta. Viendolo de forma general sin significado especificado, podemos declinar a confirmar que las personas que cubran el "slope" tipo 0 tienen una probabilidad de 42,85% de sufrir el ataque cardiaco y las personas que cubren slope tipo "1" tiene una probabilidad de padecer el ataque cardiaco en un 35%. Las personas de slope tipo "2" tienen una probabilidad de 75,17% de tener el ataque cardiaco. Portanto, Slope tipo "2" tiene más probabilidad de tener el ataque cardiaco en comparacion a los otros 2 tipos y el slope tipo "1" es la que menos probabilidad.
+
+Y si miramos la variable caa, podemos decir que 74,28% para personas con  0 venas principales (major vessels) tienen ataque cardiaco, 32,3% para personas con 1 vena principal, 18,42% para personas con 2 venas principales, 15% para personas con 3 venas principales y 75% para personas con 4 venas principales.
+
+Y por ultimo, decir que respecto la variable "thall", tenemos que hay 50% probable de que una persona con Thalium Stress Test result "0" padezca un ataque cardiaco, 33,33% para personas con resultado "1" de prueba de Thalium Stress, 78,18% para personas con resultado "2" de prueba de Thalium Stress y 23,93% para personas con resultado "3" de prueba de Thalium Stress.
+
 Estudiemos los valores numéricos:
 
 ```{r}
+
 for(i in 10:14){
   col <- names(ds)[i]
   plot <- ggplot(ds, aes(x=output, y=ds[,i], fill=output)) +
@@ -288,15 +336,30 @@ for(i in 10:14){
 
 ```
 
-Al separar los diagramas de cajas segun la variable objetivo, ya se pueden intuir alguna conclusión de correlacion. Por ejemplo, parece que es más probable tener algun ataque al corazón (output = 1) cuando:
+Al analizar las distribuciones en las histogramas sin tener en cuenta los boxplots, podemos decir que las observaciones son mas frecuentes cuando:
 
--   Picos anteriores (oldpeak) cercano a 0
+-   Picos anteriores (oldpeak) son más cercano a 0
 
--   Frecuencia cardiaca (thalachh) con valores altos (\>150)
+-   Frecuencia cardiaca (thalachh) con valores superiores a 140 y inferiores a 180. 
+-  Presión arterial en reposo está entre 100 y 160 Hg.
+-  Colesterol esta entre 150 y 350 mg/dl  segun BMI sensor
+- Y edad entre 40 y 70 años.
+
+
+Pero al analizar los diagramas de cajas segun la variable objetivo, ya se pueden intuir alguna conclusión de correlacion. Por ejemplo, parece que es más probable tener ataque al corazón (output = 1) cuando:
+
+-   Picos anteriores (oldpeak) son más cercano a 0
+
+-   Frecuencia cardiaca (thalachh) con valores entre 150y 170.
+-  Presión arterial en reposo está entre 100 y 140 Hg.
+-  Colesterol esta entre 205 y 265 mg/dl  segun BMI sensor
+- Y edad entre 45 y 59 años.
 
 Estudiemos la correlación entre las variables. Si encontramos alguna muy relacionadas podemos quitarlas del modelo y reducir su complejidad:
 
 ```{r}
+#library(sos)
+#findFn("select")
 n = c("age", "trtbps", "chol", "thalachh", "oldpeak")
 factores= ds %>% select(all_of(n))
 res<-cor(factores)
@@ -308,7 +371,7 @@ corrplot(matriz, type="upper", order="hclust", tl.col="black", tl.srt=45)
 
 ```
 
-Observamos que no hay una alta correlación entre las variables por lo que no se recomienda prescindir de ninguna.
+Observamos que no hay una alta correlación entre las variables por lo que no prescindiremos de ninguna.
 
 ```{r}
 # o2_saturation <- read.csv("../data//o2Saturation.csv")
@@ -325,31 +388,40 @@ Observamos que no hay una alta correlación entre las variables por lo que no se
 
 En el punto anterior se ha analizado el dataset y observando los resultados, ya podemos obtener algunas conclusiones sin necesidad de desarrollar más código:
 
--   **No se aprecian valores ausentes**, muchas veces identificados por "na". A veces se identifican con '0', pero este valor en la mayoría de las variables tiene un significado concreto.
+-   **No se aprecian valores ausentes**, muchas veces identificados por "na". A veces se identifican con '0', pero este valor, en nuestro caso, en la mayoría de las variables tiene un significado concreto y son recolectador y/o insertados sin transformación previa alguna. Asumiendo que los datos son recogidos sin errores alguno,  podemos afirmar que no hay ausencia de valores. En el caso de que el "0" signifique ausencia de valores, en ese supuesto habría que transformar estos "0" con un valor mas ideoneo, por ejemplo la media o la mediana para la variable numerica y moda para la categorica.Pero para nuestro caso asumimos que no ha habido ningun error al recolectar estos datos ni se ha insertado "0" como sustituyente al dato faltante. Por tanto, estos valores son aceptados como uno de los valores listados para el atributo correspondiente. 
 
--   La variable caa presenta 5 observaciones con valor "4", que no estaba entre las opciones que se indicaban en la descripción. Podrían ser candidatos a outliers, habría que consultar a un experto, pero viendo la descripción ("Número de venas principales"), parece un **valor extremo, pero no erroneo**. Se decide mantenerlo.
 
--   En los diagramas de cajas, vemos varios valores fuera de los rangos normales. Estos son valores extremos que habría que consultar a un experto si es posible que fueran erróneos para descartarlos. Si sorprende mucho la **observación con colesterol mayor, que está muy separada de los rangos normales**.
+-   En los diagramas de cajas, vemos varios valores fuera de los rangos normales. Estos son valores extremos que habría que consultar a un experto si es posible que fueran erróneos para descartarlos. Si sorprende mucho la **observación con colesterol mayor, que está muy separada de los rangos normales**, la cual estamos seguros de que es un dato erroneo. Por tanto, habria que estudiar todo los casos de valores extremos, los cuales se encuentra superiores al valor maximo y inferiores al valor minimo de la variable correspondiente. Y Asegurar que estos valores fuera del rango [minimo, maximo] no sean datos erroneos. En caso de que no fueran datos erroneas, debemos analizarlos con un experto en este campo para asegurar que estos valores son aceptables o no.
 
-Vamos a gestionar el último caso:
+La gestión de valores atípicos (outlier management) es la ciencia de investigar y aplicar un tratamiento adecuado a los valores atípicos en los datos. Puede ser tentador simplemente eliminar los registros donde hay valores atípicos en el conjunto de datos, pero no siempre es el mejor enfoque. El método de tratamiento de valores atípicos puede variar de un caso a otro y debe discutirse con la empresa antes de finalizar el método. Existen diferentes enfoques, como reemplazar el valor atípico con el valor medio o el valor mediano o, en algunos casos, descartar la observación con el valor atípico sospechoso para evitar cualquier sesgo en ellos. Tendemos a eliminar los valores atípicos si se deben a errores de entrada de datos causados por errores humanos, errores de procesamiento de datos.
+
+Vamos a gestionar el último valor extremo de Colestrol, del cual estamos seguros que es valor extremo inaceptable:
+
+```{r}
+install.packages("dplyr")                       # Install
+library("dplyr")
+#max(ds$chol,4)
+ds %>%                                      # Top N highest values 
+  arrange(desc(chol)) %>% 
+  slice(1:8)
+```
 
 ```{r}
 max(ds$chol)
 ds [ds$chol==max(ds$chol), ]
 
-# No tiene otros valores extremos, lo sustituimos por la media.
+# El ultimo valor extremo de cholestrol lo sustituimos por la media al estar seguros de que es un valor outlier erroneo.
 ds [ds$chol==max(ds$chol), ]$chol <- mean (ds$chol)
 ```
 
-Como no se han visto otros valores extremos, se considera que es una errata y se ajusta a la media. Se podría haber eliminado de la muestra, pero perderíamos datos y, al no haber otras valores extraños, se ha preferido mantener.
 
-Obviamente, en un caso real, esta decisión debería tomarse junto con un experto que determine si realmente es un valor erroneo o no. Este mismo ejercicio se debería hacer con otros valores extremos que hemos visto en otras variables decidiendo si:
+Obviamente, en un caso real, esta decisión debería tomarse junto con un experto que determine si realmente los demas valores extremos son un valores erroneos o no decidiendo si:
 
 -   Se elimina de la muestra
 
 -   Se ajusta su valor a la media u otra variable estadística
 
--   Se considera con valor ausente
+-   Se considera con valor ausente  (Balpreet:?)
 
 # 4. Análisis de los datos
 

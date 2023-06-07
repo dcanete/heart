@@ -235,6 +235,7 @@ ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "t
 
 ```
 
+
 ```{r}
 
 #comprobamos y quitemos los duplicados:
@@ -250,7 +251,7 @@ nrow(ds[duplicated(ds), ])
 
 Hablando de duplicado de row, aqui suponemos que los datos de una misma observación ha sido repetida. Por tanto, eliminamos de nuestros datos. 
 
-Pero también puede dar el caso en la realidad de que dos observaciones tengan exactamente los mismos datos. En este caso, lo dejariamos en nuestro dataset. Pero ahora para esta práctica, eliminaremos este row repetido al entender que este row ha sido repetido erroneamente. 
+Pero también puede dar el caso en la realidad de que dos observaciones/personas tengan exactamente los mismos datos. En este caso, lo dejariamos en nuestro dataset. Pero ahora para esta práctica, eliminaremos este row repetido al entender que este row ha sido repetido erroneamente. 
 
 
 Vamos a estudiar un poco más los campos categóricos comparándolos con la variable objetivo:
@@ -295,7 +296,7 @@ Balpreet:
 
 - Vemos que tenemos más casos de personas que tienen más probabilidad de tener el ataque cardiaco. Concretamente, tenemos 164 casos de personas que tienen más probabilidad de tener el ataque cardiaco y tenemos 138 casos de personas quienes tienen menos probabilidad.
 
-- Visualizando la grafica y las cantidades numericas del sexo, vemos que tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 que tienen ataque cardiaco.Y 92 casos de los 206 tienen ataque cardiaco.
+- Visualizando la grafica y las cantidades numericas del sexo, vemos que tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 de Sexo "0" tienen ataque cardiaco.Y 92 casos de los 206 de Sexo "1" tienen ataque cardiaco.
 
 - Visualizando la grafica y las cantidades numericas del cp, vemos que tenemos un total de 143 personas de cp tipo "0" (no padecen ningun tipo de Chest Pain listados), de los cuales 39 tienen ataque cardiaco. Después tenemos  50 personas de sexo tipo "1" (los cuales padecen dolor típico de angina), entre los cuales 41 son personas que padecen ataque cardiaco. Tenemos  86 personas de sexo tipo "2" (los cuales padecen dolor no anginoso), entre los cuales 68 son personas que padecen ataque cardiaco. Y por último, de las 32 personas que padecen dolor de pecho son debido a dolores asintomático, solamente 16 padecen ataque cardiaco.
 
@@ -421,7 +422,7 @@ Obviamente, en un caso real, esta decisión debería tomarse junto con un expert
 
 -   Se ajusta su valor a la media u otra variable estadística
 
--   Se considera con valor ausente  (Balpreet:?)
+-   Se considera con valor ausente de la columna  
 
 # 4. Análisis de los datos
 
@@ -431,11 +432,294 @@ Obviamente, en un caso real, esta decisión debería tomarse junto con un expert
 
 > Selección de los grupos de datos que se quieren analizar/comparar (p. ej., si se van a comparar grupos de datos, ¿cuáles son estos grupos y qué tipo de análisis se van a aplicar?)
 
+Teniendo en cuenta el output, procederemos a analizar los diferentes atributos respecto este output. Por tanto, procederemos a hacer los comparaciones entre siguientes grupos y siguientes test:
+
+- Output y atributos categoricos ['sex', 'cp', 'fbs', 'restecg','exng','slp', 'caa', 'thall']: tenemos dos variables categóricas y haremos un test de χ2 para ver si existen diferencias significativas entre los grupos definidos. Pero en nuestro caso, tenemos una muestra pequeña, portanto, usaremos Fisher Test.
+
+- Output y variables numericas nominal ['age', 'trtbps', 'chol', 'thalachh', 'oldpeak']: si cumple normalidad y homocedasticidad con output, aplicamos tStudent, si no, test de Mann-Whitney.
+
+
 ## 4.2. Comprobación de la normalidad y homogeneidad de la varianza.
+
+Comprobamos la normalidad y homogeneidad de la varianza:
+
+Testing normality assumption
+
+```{r}
+library(EnvStats)
+ds$age %>% qqPlot(dist="norm", ylab = "Age")
+```
+
+```{r}
+library(EnvStats)
+ds$trtbps %>% qqPlot(dist="norm", ylab = "trtbps")
+```
+```{r}
+library(EnvStats)
+ds$chol %>% qqPlot(dist="norm", ylab = "chol")
+```
+```{r}
+library(EnvStats)
+ds$thalachh %>% qqPlot(dist="norm", ylab = "thalachh")
+```
+
+```{r}
+library(EnvStats)
+ds$chol %>% qqPlot(dist="norm", ylab = "oldpeak")
+```
+```{r}
+shapiro.test(ds$age)
+```
+El valor P es inferior a 0,05, lo que significa que los datos de edad no se distribuyen normalmente.
+
+```{r}
+shapiro.test(ds$trtbps)
+```
+
+Los datos trtbps no se distribuyen normalmente.
+
+```{r}
+shapiro.test(ds$chol)
+```
+
+Los datos chol no se distribuyen normalmente.
+
+
+```{r}
+shapiro.test(ds$thalachh)
+```
+Los datos de thalachh no se distribuyen normalmente.
+
+```{r}
+shapiro.test(ds$oldpeak)
+```
+Los datos del pico anterior no se distribuyen normalmente.
+
+
+Podemos ver que no tenemos normalidad en nuestros datos numéricos.
+
+Ahora veamos homogeneidad de varianza mediante Levene Test (no FTest) ya que no cumplimos el requisito de normalidad:
+
+```{r}
+leveneTest(age ~ output, data = ds)
+```
+
+El valor p es 0.006079 es más bajo que el nivel de significancia de 0.05. Podemos concluir que existe una diferencia significativa entre las varianzas de la muestra probada.
+
+```{r}
+leveneTest(trtbps ~ output, data = ds)
+```
+
+El valor p es 0.1818 es mayor que el nivel de significancia de 0.05. Podemos concluir que no hay una diferencia significativa entre las varianzas de la muestra probada.
+
+```{r}
+leveneTest(chol ~ output, data = ds)
+```
+
+El valor p es 0.7264 es mayor que el nivel de significancia de 0.05. Podemos concluir que no hay una diferencia significativa entre las varianzas de la muestra probada.
+
+```{r}
+leveneTest(thalachh ~ output, data = ds)
+```
+El valor p es 0.02374 es más bajo que el nivel de significancia de 0.05. Podemos concluir que existe una diferencia significativa entre las varianzas de la muestra probada.
+
+```{r}
+leveneTest(oldpeak ~ output, data = ds)
+```
+El valor p es inferior al nivel de significación de 0,05. Podemos concluir que existe una diferencia significativa entre las varianzas de la muestra probada.
+
+Por tanto, incumplimos la asumpciones de que el dataset sea normal y tenga homogeneidad de varianza.
+
 
 ## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos.
 
-> En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
+> En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes. 
+
+Primero haremos Fisher Test para analizar la independencia de los grupos de datos:
+
+La prueba exacta de Fisher determinará si existe una relación estadísticamente significativa entre 2 atributos categóricos.
+
+Nulo (H0): No existe asociación entre ambos atributos categóricos. son independientes
+Alternativa (HA): Existe una relación entre ellos en la población.
+
+Además, la prueba de Fisher es una prueba estadística que se utiliza para determinar si las proporciones de las categorías en dos variables de grupo difieren significativamente entre sí.
+
+```{r}
+counts <- table(ds$output, ds$sex)
+counts / rowSums(counts) 
+```
+
+Podemos ver que el 43,9% de sexo "0" tuvieron heart attack, por debajo del sexo "1" con probabilidad de 56,09% . Es sorprendente esta diferencia. Pero para salir de la duda, necesitamos una prueba estadística. La prueba de chi-cuadrado se puede utilizar para probar la correlación de dos variables categóricas. Pero usaremos Fisher test porque nuestro dataset no es suficientemente grande (<1000) como para aplicar Chi-cuadrado.
+
+
+```{r}
+fisher.test(counts)
+```
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechace la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+Por otro lado, La hipótesis nula es que hombres y mujeres tienen la misma probabilidad de tener un heart attack. El valor p es bajo. Por tanto, rechazamos la hipótesis de que ambos sexos tienen la misma tasa de sufrir un infarto. Mirando los datos, es más alto para el tipo de sexo "1".
+
+Haremos lo mismo con otros atributos:
+
+```{r}
+counts <- table(ds$output, ds$cp)
+counts / rowSums(counts) 
+```
+
+```{r}
+fisher.test(counts)
+```
+
+Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechace la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+```{r}
+counts <- table(ds$output, ds$fbs)
+counts / rowSums(counts) 
+```
+
+```{r}
+fisher.test(counts)
+```
+No rechazamos la Ho  y, por tanto, los diferentes tipos de cps tienen mas o menos la misma probabilidad de tener un ataque infarto.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+```{r}
+counts <- table(ds$output, ds$restecg)
+counts / rowSums(counts) 
+```
+
+```{r}
+fisher.test(counts)
+```
+Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la grafica y estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+```{r}
+counts <- table(ds$output, ds$exng)
+counts / rowSums(counts) 
+```
+
+```{r}
+fisher.test(counts)
+```
+
+Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la grafica y las estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+```{r}
+counts <- table(ds$output, ds$slp)
+counts / rowSums(counts) 
+```
+
+```{r}
+fisher.test(counts)
+```
+Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la grafica y las estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+
+```{r}
+counts <- table(ds$output, ds$caa)
+counts / rowSums(counts) 
+```
+```{r}
+fisher.test(counts)
+```
+
+
+Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la grafica y las estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+
+```{r}
+counts <- table(ds$output, ds$thall)
+counts / rowSums(counts) 
+fisher.test(counts)
+```
+
+Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en thall=2 teniendo en cuenta la grafica y las estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+```{r}
+counts <- table(ds$output, ds$output)
+counts / rowSums(counts) 
+fisher.test(counts)
+```
+Aqui podemos rechazar la hipotesis nula de que las medias entre los 2 outputs son iguales y decir que hay mas probabilidad de que una persona tenga ataque de corazon según las graficas y estadisticas anteriores.
+
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+---
+Ahora vamos a estudiar los atributos numericos versus el output mediante  mediante Whitney.
+
+```{r}
+str(ds[10:14])
+```
+
+```{r}
+wilcox.test(age ~ output, data=ds) 
+```
+ 
+
+```{r}
+wilcox.test(trtbps ~ output, data=ds) 
+```
+
+
+```{r}
+wilcox.test(chol ~ output, data=ds) 
+```
+
+
+```{r}
+wilcox.test(thalachh ~ output, data=ds) 
+```
+
+
+```{r}
+wilcox.test(oldpeak ~ output, data=ds) 
+```
+Con un nivel de significancia de .05, rechazamos Hº y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
+
+
+```{r}
+install.packages("ggcorrplot")
+library(ggcorrplot)
+numerical_data <- ds[10:14]
+data_normalized <- scale(numerical_data)
+corr_matrix <- cor(data_normalized)
+ggcorrplot(corr_matrix)
+```
+
+
+```{r}
+data.pca <- princomp(corr_matrix)
+summary(data.pca)
+```
+
+Los resultados anteriores muestran cuán importantes son estos 4 componentes de PCA considerando lo siguiente:
+
+- El componente 1 explica el 57,70% de la varianza total.
+- El componente 2 explica el 18,87% de la varianza total.
+- El componente 3 explica el 14,56% de la varianza total.
+- El componente 4 explica el 8,56% de la varianza total.
+
+Extra: es genial tener los primeros 4 componentes, pero ¿qué significan realmente? Esto se puede responder explorando cómo se relacionan con cada columna utilizando las cargas de cada componente principal. 
+
+
+```{r}
+data.pca$loadings[, 1:4]
+```
+¿Cómo interpretamos estos resultados? Por ejemplo, centrándonos en el Componente 1, debemos mencionar que el atributo "thalachh" impacta negativamente en el PCA y los otros factores de forma positiva. Y el mismo enfoque se aplica a los otros componentes.
 
 # 5. Representación de los resultados
 
@@ -447,7 +731,39 @@ En el desarrollo del ejercicio se han ido utilizando diagramas representativos. 
 
 > A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
 
-`Pendiente`
+Based on the results given above, we have the following conclusions:
+
+- Tenemos más probabilidad de tener un caso de ataque cardiaco.
+- Sexo 0 tiene más probabilidad de tener un ataque cardiaco.
+- Cp tipo 2 tiende a tener más probabilidad de ataque cardiaco.
+
+- Fbs con anomalía en la onda ST-T tiene 62% de probabilidad de tener el ataque cardiaco.
+
+- Respecto variable angina inducida por el ejercicio (exng), podemos decir 69,45% de los casos de personas de tener angina no inducida por el ejercicio tienen ataque cardiaco. Este baja a 23% cuando el ataque cardiaco es debido a angina inducida por el ejercicio.
+
+- Slope tipo "2" tiene más probabilidad de tener el ataque cardiaco.
+
+- Respecto la caa, personas con 0 venas principales tienen más probabilidad de tener el ataque cardiaco.
+
+- Respecto thall, decir que personas con resultado "2" de prueba de Thalium Stress tiene una probabilidad de 78,18% de tener el ataque cardiaco.
+
+Y es más probable tener ataque al corazón (output = 1) cuando:
+
+-   Picos anteriores (oldpeak) son más cercano a 0
+
+-   Frecuencia cardiaca (thalachh) con valores entre 150y 170.
+-  Presión arterial en reposo está entre 100 y 140 Hg.
+-  Colesterol esta entre 205 y 265 mg/dl  segun BMI sensor
+- Y edad entre 45 y 59 años.
+
+Despues de comprobar qqtest, shapiro test y levene test comprobamos que incumplimos la asumpciones de que el dataset sea normal y tenga homogeneidad de varianza.
+
+Despues de hacer Fisher Test, pudimos comprobar que los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Y Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+
+
+Respecto las variables numericas y mediante el Whitney Test, pudimos comprobar que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
+
+
 
 # 7. Código
 
@@ -464,3 +780,5 @@ Se puede visualizar en cualquiera de estas dos alternativas:
 -   Github: <https://github.com/dcanete/heart>
 
 -   Drive: <https://drive.google.com/open?id=1gko9Vw2D3FQP5aewnnfp-hPio-AZ70KZ>
+
+

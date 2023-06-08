@@ -48,13 +48,14 @@ Antes de empezar con los apartados propuestos en el enunciado de la PRA, se real
 # Librerías que se utilizan en el código
 if(!require('gt')) {install.packages('gt'); library('gt')}
 if(!require("corrplot")) install.packages("corrplot"); library("corrplot")
-
+if(!require("dplyr")) install.packages("dplyr"); library("dplyr") 
+if(!require("ggplot2")) install.packages("ggplot2"); library("ggplot2")
+if(!require("ggpubr")) install.packages("ggpubr"); library("ggpubr")
+if(!require("gridExtra")) install.packages("gridExtra"); library("gridExtra")
 
 # Cargamos los datos
-ds<-read.csv("heart.csv")
+ds<-read.csv("../data/heart.csv")
 ```
-
-`Yo no pondría nada mas, salvo ir añadiendo librerías`
 
 # 1. Descripción del dataset
 
@@ -74,7 +75,7 @@ En primer lugar, se estudia la documentación disponible en <https://www.kaggle.
 
     -   exang: angina inducida por el ejercicio (1 = sí; 0 = no)
 
-    -   ca: número de venas principales 
+    -   ca: número de venas principales
 
     -   cp : Tipo de dolor torácico
 
@@ -134,8 +135,7 @@ unique (ds$exng)
 
 ```
 
-Hay 303 observaciones, inicialmente no hay valores ausentes. 
-Respecto los 0, estos son valores aceptables entre los valores disponibles de atributo. Es decir, los valores "0" no significan ausencia de valor para el atributo especifico.
+Hay 303 observaciones, inicialmente no hay valores ausentes. Respecto los 0, estos son valores aceptables entre los valores disponibles de atributo. Es decir, los valores "0" no significan ausencia de valor para el atributo especifico.
 
 Los campos no son exactamente como aparece en la documentación, pero se puede encontrar una descripción más actualizada en <https://www.kaggle.com/code/namanmanchanda/heart-attack-eda-prediction-90-accuracy>:
 
@@ -178,7 +178,7 @@ Los campos no son exactamente como aparece en la documentación, pero se puede e
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
 | slp        | Tendencia. Es una codificación, pero **no se conoce el significado** de cada valor.                                    | int (0, 1 ó 2)                                    |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| caa        | Número de venas principales (0-3)                                                                                      | int (0, 1, 2 ó 3)                                 |
+| caa        | Número de venas principales                                                                                            | int (0, 1, 2, 3 ó 4)                              |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
 | thall      | Resultado de la prueba de esfuerzo con talio. Es una codificación, pero **no se conoce el significado** de cada valor. | int (0, 1, 2 ó 3)                                 |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
@@ -207,9 +207,9 @@ Ahora conocemos un poco mejor los datos, podemos responder a la pregunta. Se tra
 
 > Integración y selección de los datos de interés a analizar. Puede ser el resultado de adicionar diferentes datasets o una subselección útil de los datos originales, en base al objetivo que se quiera conseguir.
 
-La muestra no tiene un número elevado de registros que puedan dar problemas en el rendimiento.
+La muestra no tiene un número elevado de registros que puedan dar problemas en el rendimiento. En caso de que si la hubiera, habría que ver alguna manera de limitar los datos, al menos para facilitar los cálculos en fase de desarrollo.
 
-Si hay un número elevado de campos que es posible que tengamos que limitar.
+Organizamos y buscamos duplicados:
 
 ```{r}
 # Cambio de tipo variables clasificatorias
@@ -233,56 +233,39 @@ ds$oldpeak <- as.numeric (ds$oldpeak)
 # Ordenación de los campos (objetivo, clasificatorias y numéricas)
 ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "thall", "age", "trtbps", "chol", "thalachh", "oldpeak")]
 
-```
+# Búsqueda de duplicados
+print(paste ("Numero de Rows Duplicados:", nrow(ds[duplicated(ds), ]), "duplicados"))
 
-```{r}
-
-#comprobamos y quitemos los duplicados:
-print("Numero de Rows Duplicados:")
-nrow(ds[duplicated(ds), ])
-
-#Quitar row duplicados:
+# Eliminamos duplicados
 ds<-ds[!duplicated(ds), ]
-print("Comprobacion de Rows No Duplicados")
-nrow(ds[duplicated(ds), ])
+print(paste ("Comprobacion de Rows No Duplicados:", nrow(ds[duplicated(ds), ]), "duplicados"))
 
 ```
 
-Hablando de duplicado de row, aqui suponemos que los datos de una misma observación ha sido repetida. Por tanto, eliminamos de nuestros datos. 
-
-Pero también puede dar el caso en la realidad de que dos observaciones tengan exactamente los mismos datos. En este caso, lo dejariamos en nuestro dataset. Pero ahora para esta práctica, eliminaremos este row repetido al entender que este row ha sido repetido erroneamente. 
-
+Se ha detectado un duplicado donde se ha supuesto que ha habido una errata y se ha inscrito dos veces la misma observación. Se considera poco probable que haya dos observaciones exactamente iguales, pero en un caso real sería recomendable que lo valorase un experto.
 
 Vamos a estudiar un poco más los campos categóricos comparándolos con la variable objetivo:
 
 ```{r}
-
-histList<- list()
-
-
-for (i in 1:9) {
-  #plot (ds[i])
-  #ggp <- boxplot(ds[,i], horizontal = TRUE, xlab=names(news)[i])
-  #print (ggp)
-  #histList[[i]] <- ggp # añadimos cada plot a la lista vacía
-  #i <- 2
-  vName <- names(ds)[i]
-  val <- ds[, i]
+myHistCat <- function(campo) {
   myPlot <- ggplot(ds, aes(val, fill = output)) +
-    geom_bar() + labs(x = names(ds)[i], y = "Observaciones") +
+    geom_bar() + labs(x = campo, y = "Observaciones") +
     guides(fill = guide_legend(title = "")) +
     scale_fill_manual(values = c("black", "#008000")) +
-    theme(axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) + 
-    ggtitle(vName)
-  print (myPlot)
-  print (table(val, ds$output))
+    theme(axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) 
+  return (myPlot)
 }
+
+grid.arrange(myHistCat("output"), myHistCat("sex"), myHistCat("cp"), 
+             myHistCat("fbs"), myHistCat("restecg"), myHistCat("exng"), 
+             myHistCat("slp"), myHistCat("caa"), myHistCat("thall"),
+             ncol = 3, nrow = 3)
 
 ```
 
 Sorprende que hay más personas predispuestas de las que no (164/138). Eso hace pensar que **la muestra está sesgada**, seguramente se ha obtenido entre pacientes que tenían alguna patología. Por eso se considera que **el estudio puede servir para detectar factores de riesgo, pero no se pueden sacar conclusiones a nivel de población general**,
 
-Se observan tambien algunos valores posibles de variables con muy pocas observaciones, por lo que será dificil que sean significativos en un modelo predictivo. Este es el caso, por ejemplo:
+Se observan también algunos valores posibles de variables con muy pocas observaciones, por lo que será difícil que sean significativos en un modelo predictivo. Este es el caso, por ejemplo:
 
 -   4 venas principales en caa, donde hay solo 5 observaciones. De hecho, en la descripción no se contemplaba ese valor.
 
@@ -290,49 +273,104 @@ Se observan tambien algunos valores posibles de variables con muy pocas observac
 
 -   2 en restecg (hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes) donde solo hay 4 observaciones.
 
+```{r}
+for (i in 1:9) {
+  vName <- names(ds)[i]
+  print (vName)
+  print (table(val, ds$output))
+}
+```
 
-Balpreet: 
+Viendo las tablas por cada variable, podemos observar lo siguiente:
 
-- Vemos que tenemos más casos de personas que tienen más probabilidad de tener el ataque cardiaco. Concretamente, tenemos 164 casos de personas que tienen más probabilidad de tener el ataque cardiaco y tenemos 138 casos de personas quienes tienen menos probabilidad.
+-   sex: tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 que tienen ataque cardiaco. Y 92 casos de los 206 tienen ataque cardiaco.
 
-- Visualizando la grafica y las cantidades numericas del sexo, vemos que tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 que tienen ataque cardiaco.Y 92 casos de los 206 tienen ataque cardiaco.
+-   cp: vemos que tenemos un total de 143 personas de cp tipo "0" (no padecen ningún tipo de Chest Pain listados), de los cuales 39 tienen ataque cardíaco. Después tenemos 50 personas de cp tipo "1" (los cuales padecen dolor típico de angina), entre los cuales 41 son personas que padecen ataque cardíaco. Tenemos 86 personas de sexo tipo "2" (los cuales padecen dolor no anginoso), entre los cuales 68 son personas que padecen ataque cardíaco. Y por último, de las 32 personas que padecen dolor de pecho son debido a dolores asintomático, solamente 16 padecen ataque cardíaco.
 
-- Visualizando la grafica y las cantidades numericas del cp, vemos que tenemos un total de 143 personas de cp tipo "0" (no padecen ningun tipo de Chest Pain listados), de los cuales 39 tienen ataque cardiaco. Después tenemos  50 personas de sexo tipo "1" (los cuales padecen dolor típico de angina), entre los cuales 41 son personas que padecen ataque cardiaco. Tenemos  86 personas de sexo tipo "2" (los cuales padecen dolor no anginoso), entre los cuales 68 son personas que padecen ataque cardiaco. Y por último, de las 32 personas que padecen dolor de pecho son debido a dolores asintomático, solamente 16 padecen ataque cardiaco.
+-   fbs: el cual significa fasting blood sugar (glucemia en ayunas), podemos decir que 54,86% (141/(116+141)) de las personas no padecen glucemia en ayunas tiene ataque cardíaco. En cambio, el porcentaje de tener el ataque cardíaco baja a 51,11% (23/(22+23)) para las personas que padecen glucemia en ayunas. Y sumando las 2 categorías, tenemos que la probabilidad de tener ataque cardíaco es 54,3% ((141+23)/(302)) independientemente de si la persona ha tenido glucemia en ayunas o no. Por tanto, en resumen, las personas que no padecen glucemia en ayunas tienen mas probabilidad de tener un ataque cardíaco.
 
-Respecto fbs, el cual significa fasting blood sugar (glucemia en ayunas), podemos decir que 54,86% (141/(116+141)) de las personas no padecen glucemia en ayunas tengan ataque cardiaco. En cambio, el porcentaje de tener el ataque cardiaco baja a 51,11% (23/(22+23)) para las personas que padecen glucemia en ayunas. Y sumando las 2 categorias, tenemos que la probabilidad de tener ataque cardiaco es 54,3% ((141+23)/(302)) independientemente de si la persona ha tenido glucemia en ayunas o no. Por tanto, en resumen, las personas que no padecen glucemis en ayunas tienen mas probabilidad de tener un ataque cardiaco.
+-   restecg: el cual significa resultados electrocardiográficos en reposo, podemos decir que 46,25% (68/(68+79)) de las personas que tienen un resultado electrocardiográficos en reposo NORMAL pueden padecer un ataque cardíaco. Y este porcentaje sube a 62,91% en el caso de personas con anomalía en la onda ST-T. Y es 25% la probabilidad de que una persona que muestra hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes padezca un ataque cardíaco. Y sumando ((68+95+1)/(79+68+56+95+3+1)), como esperamos, hay una probabilidad de 54,3% de que una persona padezca un ataque cardíaco independientemente de tipo de resultados electrocardiográficos en reposo. En resumen, hay más probabilidad de que una persona con anomalía en la onda ST-T padezca un ataque cardíaco comparado a las 2 otros tipos de resultados electrocardiográficos en reposo. Y podemos decir de que es mas probable de una una persona con resultado NORMAL padezca un ataque cardíaco que una persona que muestre hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes.
 
-Respecto restecg, el cual significa resultados electrocardiográficos en reposo, podemos decir que 46,25% (68/(68+79)) de las personas que tienen un resultado electrocardiográficos en reposo NORMAL pueden padecer un ataque cardiaco. Y este porcentaje sube a 62,91% en el caso de personas con anomalía en la onda ST-T. Y es 25% la probabilidad de que una persona que muestra hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes padezca un ataque cardiaco. Y sumando ((68+95+1)/(79+68+56+95+3+1)), como esperamos, hay una probabilidad de 54,3% de que una persona padezca un ataque cardiaco independientemente de tipo de resultados electrocardiográficos en reposo. En resumen, hay más probabilidad de que una persona con anomalía en la onda ST-T padezca un ataque cardiaco comparado a las 2 otros tipos de resultados electrocardiográficos en reposo. Y podemos decir de que es mas probable de una una persona con resultado NORMAL padezca un ataque cardiaco que una persona que muestre hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes.
+-   exng: que significa angina inducida por el ejercicio (exercise induced angina), podemos decir 69,45% de los casos de personas de tener angina no inducida por el ejercicio tienen ataque cardíaco. En cambio, si hablamos de personas con angina inducida por el ejercicio, este porcentaje de padecer el ataque cardíaco baja a 23%. Claramente analizamos que las personas con angina no inducida por el ejercicio es mas que doble de probable que la persona con angina inducida por ejercicio.
 
+-   slp: podemos observar que las personas que cubran el "slope" tipo 0 tienen una probabilidad de 42,85% de sufrir el ataque cardíaco y las personas que cubren slope tipo "1" tiene una probabilidad de padecer el ataque cardíaco en un 35%. Las personas de slope tipo "2" tienen una probabilidad de 75,17% de tener el ataque cardíaco. Por tanto, Slope tipo "2" tiene más probabilidad de tener el ataque cardíaco en comparación a los otros 2 tipos y el slope tipo "1" es la que menos probabilidad.
 
-Respecto variable exng que significa angina inducida por el ejercicio (exercise induced angina), podemos decir 69,45% de los casos de personas de tener angina no inducida por el ejercicio tienen ataque cardiaco. En cambio, si hablamos de personas con angina inducida por el ejecicio, este porcentaje de padecer el ataque cardiaco baja a 23%. Claramente analizamos que las personas con angina no inducida por el ejercicio es mas que doble de probable que la persona con angina inducida por ejercicio.
+-   caa: podemos decir que 74,28% para personas con 0 venas principales (major vessels) tienen ataque cardiaco, 32,3% para personas con 1 vena principal, 18,42% para personas con 2 venas principales, 15% para personas con 3 venas principales y 75% para personas con 4 venas principales.
 
-Respecto la variable slp, habla de "slope" pero sin especificar el significado concreto de esta variable concreta. Viendolo de forma general sin significado especificado, podemos declinar a confirmar que las personas que cubran el "slope" tipo 0 tienen una probabilidad de 42,85% de sufrir el ataque cardiaco y las personas que cubren slope tipo "1" tiene una probabilidad de padecer el ataque cardiaco en un 35%. Las personas de slope tipo "2" tienen una probabilidad de 75,17% de tener el ataque cardiaco. Portanto, Slope tipo "2" tiene más probabilidad de tener el ataque cardiaco en comparacion a los otros 2 tipos y el slope tipo "1" es la que menos probabilidad.
-
-Y si miramos la variable caa, podemos decir que 74,28% para personas con  0 venas principales (major vessels) tienen ataque cardiaco, 32,3% para personas con 1 vena principal, 18,42% para personas con 2 venas principales, 15% para personas con 3 venas principales y 75% para personas con 4 venas principales.
-
-Y por ultimo, decir que respecto la variable "thall", tenemos que hay 50% probable de que una persona con Thalium Stress Test result "0" padezca un ataque cardiaco, 33,33% para personas con resultado "1" de prueba de Thalium Stress, 78,18% para personas con resultado "2" de prueba de Thalium Stress y 23,93% para personas con resultado "3" de prueba de Thalium Stress.
+-   thall: tenemos que hay 50% probable de que una persona con Thalium Stress Test result "0" padezca un ataque cardiaco, 33,33% para personas con resultado "1" de prueba de Thalium Stress, 78,18% para personas con resultado "2" de prueba de Thalium Stress y 23,93% para personas con resultado "3" de prueba de Thalium Stress.
 
 Estudiemos los valores numéricos:
 
 ```{r}
+myHistNum <- function(campo) {
+  myPlot <- ggplot(ds, aes(x=ds[,campo])) + geom_histogram() +
+    labs(x = campo)
+  return (myPlot)
+}
+
+grid.arrange(myHistNum("age"), myHistNum("trtbps"), myHistNum("chol"), 
+             myHistNum(""), myHistNum(""), myHistNum(""),
+             ncol = 3, nrow = 3)
+
+myHistNum ("age")
+
+ds$age <- as.numeric (ds$age)
+ds$trtbps <- as.numeric (ds$trtbps)
+ds$chol <- as.numeric (ds$chol)
+ds$thalachh <- as.numeric (ds$thalachh)
+ds$oldpeak <- as.numeric (ds$oldpeak)
+
+myCaja <- function(campo) {
+  myPlot <- ggplot(ds, aes(val, fill = output)) +
+    geom_bar() + labs(x = campo, y = "Observaciones") +
+    guides(fill = guide_legend(title = "")) +
+    scale_fill_manual(values = c("black", "#008000")) +
+    theme(axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) 
+  return (myPlot)
+}
+
+grid.arrange(myHist1("output"), myHist1("sex"), myHist1("cp"), 
+             myHist1("fbs"), myHist1("restecg"), myHist1("exng"), 
+             myHist1("slp"), myHist1("caa"), myHist1("thall"),
+             ncol = 3, nrow = 3)
+
+myHist1 (chol)
+
+ds["sex"]
+
+plotList<- list(5)
+plotList2<- list(5)
 
 for(i in 10:14){
-  col <- names(ds)[i]
-  plot <- ggplot(ds, aes(x=output, y=ds[,i], fill=output)) +
+  col_names <- names(ds)[i]
+  col_val <- ds[,i]
+  p <- ggplot(ds, aes(x=output, y=col_val, fill=output)) +
     geom_boxplot(alpha=0.5) +
-    labs(x = "output", y = names(ds)[i]) +
+    labs(x = "output", y = col_names) +
     theme(legend.position="none") 
-  print (plot)
-  plot <- hist(ds[,i], main=col,
-    xlab="Observaciones",
-    col="blue",
-    freq=FALSE
-  )
-  # plot <- ggplot(data = ds, aes(x = ds$output, y=ds[,i])) + 
-  #   geom_point(color = "gray30") + geom_smooth(method = lm,color = "firebrick") + 
-  #   theme_bw() + xlab("Muertes") + ylab(col)
-  # print (plot)
+  plotList[[i-9]] <- p
+  p <- ggplot(ds, aes(x=col_val)) + geom_histogram() +
+    labs(x = col_names)
+  plotList2[[i-9]] <- p
+  print (ggplot(ds, aes(x=col_val)) + geom_histogram() +
+    labs(x = col_names))
 }
+
+kk1 <- ggplot(ds, aes(x=output, y=ds[,10], fill=output)) +
+    geom_boxplot(alpha=0.5) +
+    labs(x = "output", y = names(ds)[10]) +
+    theme(legend.position="none") 
+kk2 <- ggplot(ds, aes(x=output, y=ds[,11], fill=output)) +
+    geom_boxplot(alpha=0.5) +
+    labs(x = "output", y = names(ds)[11]) +
+    theme(legend.position="none") 
+plotList <- list(kk1, kk2) 
+
+do.call("grid.arrange", c(plotList, ncol = 3))
+do.call("grid.arrange", c(plotList2, ncol = 3))     
+
+plotList[1]
+plotList[2]
 
 ```
 
@@ -340,26 +378,29 @@ Al analizar las distribuciones en las histogramas sin tener en cuenta los boxplo
 
 -   Picos anteriores (oldpeak) son más cercano a 0
 
--   Frecuencia cardiaca (thalachh) con valores superiores a 140 y inferiores a 180. 
--  Presión arterial en reposo está entre 100 y 160 Hg.
--  Colesterol esta entre 150 y 350 mg/dl  segun BMI sensor
-- Y edad entre 40 y 70 años.
+-   Frecuencia cardiaca (thalachh) con valores superiores a 140 y inferiores a 180.
 
+-   Presión arterial en reposo está entre 100 y 160 Hg.
+
+-   Colesterol esta entre 150 y 350 mg/dl segun BMI sensor
+
+-   Y edad entre 40 y 70 años.
 
 Pero al analizar los diagramas de cajas segun la variable objetivo, ya se pueden intuir alguna conclusión de correlacion. Por ejemplo, parece que es más probable tener ataque al corazón (output = 1) cuando:
 
 -   Picos anteriores (oldpeak) son más cercano a 0
 
 -   Frecuencia cardiaca (thalachh) con valores entre 150y 170.
--  Presión arterial en reposo está entre 100 y 140 Hg.
--  Colesterol esta entre 205 y 265 mg/dl  segun BMI sensor
-- Y edad entre 45 y 59 años.
+
+-   Presión arterial en reposo está entre 100 y 140 Hg.
+
+-   Colesterol esta entre 205 y 265 mg/dl segun BMI sensor
+
+-   Y edad entre 45 y 59 años.
 
 Estudiemos la correlación entre las variables. Si encontramos alguna muy relacionadas podemos quitarlas del modelo y reducir su complejidad:
 
 ```{r}
-#library(sos)
-#findFn("select")
 n = c("age", "trtbps", "chol", "thalachh", "oldpeak")
 factores= ds %>% select(all_of(n))
 res<-cor(factores)
@@ -388,8 +429,7 @@ Observamos que no hay una alta correlación entre las variables por lo que no pr
 
 En el punto anterior se ha analizado el dataset y observando los resultados, ya podemos obtener algunas conclusiones sin necesidad de desarrollar más código:
 
--   **No se aprecian valores ausentes**, muchas veces identificados por "na". A veces se identifican con '0', pero este valor, en nuestro caso, en la mayoría de las variables tiene un significado concreto y son recolectador y/o insertados sin transformación previa alguna. Asumiendo que los datos son recogidos sin errores alguno,  podemos afirmar que no hay ausencia de valores. En el caso de que el "0" signifique ausencia de valores, en ese supuesto habría que transformar estos "0" con un valor mas ideoneo, por ejemplo la media o la mediana para la variable numerica y moda para la categorica.Pero para nuestro caso asumimos que no ha habido ningun error al recolectar estos datos ni se ha insertado "0" como sustituyente al dato faltante. Por tanto, estos valores son aceptados como uno de los valores listados para el atributo correspondiente. 
-
+-   **No se aprecian valores ausentes**, muchas veces identificados por "na". A veces se identifican con '0', pero este valor, en nuestro caso, en la mayoría de las variables tiene un significado concreto y son recolectador y/o insertados sin transformación previa alguna. Asumiendo que los datos son recogidos sin errores alguno, podemos afirmar que no hay ausencia de valores. En el caso de que el "0" signifique ausencia de valores, en ese supuesto habría que transformar estos "0" con un valor mas ideoneo, por ejemplo la media o la mediana para la variable numerica y moda para la categorica.Pero para nuestro caso asumimos que no ha habido ningun error al recolectar estos datos ni se ha insertado "0" como sustituyente al dato faltante. Por tanto, estos valores son aceptados como uno de los valores listados para el atributo correspondiente.
 
 -   En los diagramas de cajas, vemos varios valores fuera de los rangos normales. Estos son valores extremos que habría que consultar a un experto si es posible que fueran erróneos para descartarlos. Si sorprende mucho la **observación con colesterol mayor, que está muy separada de los rangos normales**, la cual estamos seguros de que es un dato erroneo. Por tanto, habria que estudiar todo los casos de valores extremos, los cuales se encuentra superiores al valor maximo y inferiores al valor minimo de la variable correspondiente. Y Asegurar que estos valores fuera del rango [minimo, maximo] no sean datos erroneos. En caso de que no fueran datos erroneas, debemos analizarlos con un experto en este campo para asegurar que estos valores son aceptables o no.
 
@@ -398,8 +438,7 @@ La gestión de valores atípicos (outlier management) es la ciencia de investiga
 Vamos a gestionar el último valor extremo de Colestrol, del cual estamos seguros que es valor extremo inaceptable:
 
 ```{r}
-install.packages("dplyr")                       # Install
-library("dplyr")
+
 #max(ds$chol,4)
 ds %>%                                      # Top N highest values 
   arrange(desc(chol)) %>% 
@@ -414,14 +453,13 @@ ds [ds$chol==max(ds$chol), ]
 ds [ds$chol==max(ds$chol), ]$chol <- mean (ds$chol)
 ```
 
-
 Obviamente, en un caso real, esta decisión debería tomarse junto con un experto que determine si realmente los demas valores extremos son un valores erroneos o no decidiendo si:
 
 -   Se elimina de la muestra
 
 -   Se ajusta su valor a la media u otra variable estadística
 
--   Se considera con valor ausente  (Balpreet:?)
+-   Se considera con valor ausente (Balpreet:?)
 
 # 4. Análisis de los datos
 

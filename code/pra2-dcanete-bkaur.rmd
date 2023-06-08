@@ -52,6 +52,9 @@ if(!require("dplyr")) install.packages("dplyr"); library("dplyr")
 if(!require("ggplot2")) install.packages("ggplot2"); library("ggplot2")
 if(!require("ggpubr")) install.packages("ggpubr"); library("ggpubr")
 if(!require("gridExtra")) install.packages("gridExtra"); library("gridExtra")
+if(!require("EnvStats")) install.packages("EnvStats"); library("EnvStats")
+if(!require("car")) install.packages("car"); library("car")
+if(!require("ggcorrplot")) install.packages("ggcorrplot"); library("ggcorrplot")
 
 # Cargamos los datos
 ds<-read.csv("../data/heart.csv")
@@ -233,40 +236,20 @@ ds$oldpeak <- as.numeric (ds$oldpeak)
 # Ordenación de los campos (objetivo, clasificatorias y numéricas)
 ds <- ds [, c ("output", "sex", "cp", "fbs", "restecg", "exng", "slp", "caa", "thall", "age", "trtbps", "chol", "thalachh", "oldpeak")]
 
-# Búsqueda de duplicados
-print(paste ("Numero de Rows Duplicados:", nrow(ds[duplicated(ds), ]), "duplicados"))
-
-<<<<<<< HEAD
-# Eliminamos duplicados
-=======
-
-```{r}
-
-#comprobamos y quitemos los duplicados:
-print("Numero de Rows Duplicados:")
-nrow(ds[duplicated(ds), ])
-
-#Quitar row duplicados:
->>>>>>> ef8b8bc834e6a053c421d8032c68dee78d617056
+# Comprobamos y quitamos los duplicados:
+print(paste ("Duplicados:", nrow(ds[duplicated(ds), ]), "duplicados"))
 ds<-ds[!duplicated(ds), ]
-print(paste ("Comprobacion de Rows No Duplicados:", nrow(ds[duplicated(ds), ]), "duplicados"))
+print(paste ("Duplicados despues de limpieza:", nrow(ds[duplicated(ds), ]), "duplicados"))
 
 ```
 
-<<<<<<< HEAD
-Se ha detectado un duplicado donde se ha supuesto que ha habido una errata y se ha inscrito dos veces la misma observación. Se considera poco probable que haya dos observaciones exactamente iguales, pero en un caso real sería recomendable que lo valorase un experto.
-=======
-Hablando de duplicado de row, aqui suponemos que los datos de una misma observación ha sido repetida. Por tanto, eliminamos de nuestros datos. 
-
-Pero también puede dar el caso en la realidad de que dos observaciones/personas tengan exactamente los mismos datos. En este caso, lo dejariamos en nuestro dataset. Pero ahora para esta práctica, eliminaremos este row repetido al entender que este row ha sido repetido erroneamente. 
-
->>>>>>> ef8b8bc834e6a053c421d8032c68dee78d617056
+Se considera poco probable que haya dos observaciones exactamente iguales y, aunque en un caso real sería recomendable que lo valorase un experto, se ha supuesto una errata a la hora de crear el dataset y se ha eliminado la observación repetida.
 
 Vamos a estudiar un poco más los campos categóricos comparándolos con la variable objetivo:
 
 ```{r}
 myHistCat <- function(campo) {
-  myPlot <- ggplot(ds, aes(val, fill = output)) +
+  myPlot <- ggplot(ds, aes(x=ds[,campo], fill = output)) +
     geom_bar() + labs(x = campo, y = "Observaciones") +
     guides(fill = guide_legend(title = "")) +
     scale_fill_manual(values = c("black", "#008000")) +
@@ -285,7 +268,7 @@ Sorprende que hay más personas predispuestas de las que no (164/138). Eso hace 
 
 Se observan también algunos valores posibles de variables con muy pocas observaciones, por lo que será difícil que sean significativos en un modelo predictivo. Este es el caso, por ejemplo:
 
--   4 venas principales en caa, donde hay solo 5 observaciones. De hecho, en la descripción no se contemplaba ese valor.
+-   4 venas principales en caa, donde hay solo 5 observaciones.
 
 -   0 en la prueba de esfuerzo, donde hay solo dos observaciones.
 
@@ -295,7 +278,7 @@ Se observan también algunos valores posibles de variables con muy pocas observa
 for (i in 1:9) {
   vName <- names(ds)[i]
   print (vName)
-  print (table(val, ds$output))
+  print (table(ds[,i], ds$output))
 }
 ```
 
@@ -303,11 +286,9 @@ Viendo las tablas por cada variable, podemos observar lo siguiente:
 
 -   sex: tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 que tienen ataque cardiaco. Y 92 casos de los 206 tienen ataque cardiaco.
 
-<<<<<<< HEAD
 -   cp: vemos que tenemos un total de 143 personas de cp tipo "0" (no padecen ningún tipo de Chest Pain listados), de los cuales 39 tienen ataque cardíaco. Después tenemos 50 personas de cp tipo "1" (los cuales padecen dolor típico de angina), entre los cuales 41 son personas que padecen ataque cardíaco. Tenemos 86 personas de sexo tipo "2" (los cuales padecen dolor no anginoso), entre los cuales 68 son personas que padecen ataque cardíaco. Y por último, de las 32 personas que padecen dolor de pecho son debido a dolores asintomático, solamente 16 padecen ataque cardíaco.
-=======
-- Visualizando la grafica y las cantidades numericas del sexo, vemos que tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 de Sexo "0" tienen ataque cardiaco.Y 92 casos de los 206 de Sexo "1" tienen ataque cardiaco.
->>>>>>> ef8b8bc834e6a053c421d8032c68dee78d617056
+
+-   Visualizando la grafica y las cantidades numericas del sexo, vemos que tenemos un total de 96 personas de sexo tipo "0" y 206 personas de sexo tipo "1". Y si pasamos a profundizar más en estos totales, podemos ver que tenemos 72 casos de los 96 de Sexo "0" tienen ataque cardiaco.Y 92 casos de los 206 de Sexo "1" tienen ataque cardiaco.
 
 -   fbs: el cual significa fasting blood sugar (glucemia en ayunas), podemos decir que 54,86% (141/(116+141)) de las personas no padecen glucemia en ayunas tiene ataque cardíaco. En cambio, el porcentaje de tener el ataque cardíaco baja a 51,11% (23/(22+23)) para las personas que padecen glucemia en ayunas. Y sumando las 2 categorías, tenemos que la probabilidad de tener ataque cardíaco es 54,3% ((141+23)/(302)) independientemente de si la persona ha tenido glucemia en ayunas o no. Por tanto, en resumen, las personas que no padecen glucemia en ayunas tienen mas probabilidad de tener un ataque cardíaco.
 
@@ -325,78 +306,20 @@ Estudiemos los valores numéricos:
 
 ```{r}
 myHistNum <- function(campo) {
-  myPlot <- ggplot(ds, aes(x=ds[,campo])) + geom_histogram() +
-    labs(x = campo)
+  myPlot <- ggplot(ds, aes(ds[,campo], fill = output)) +
+    geom_bar() + labs(x = campo, y = "Observ.") +
+    guides(fill = guide_legend(title = "")) +
+    scale_fill_manual(values = c("black", "#008000")) 
   return (myPlot)
 }
 
 grid.arrange(myHistNum("age"), myHistNum("trtbps"), myHistNum("chol"), 
-             myHistNum(""), myHistNum(""), myHistNum(""),
-             ncol = 3, nrow = 3)
-
-myHistNum ("age")
-
-ds$age <- as.numeric (ds$age)
-ds$trtbps <- as.numeric (ds$trtbps)
-ds$chol <- as.numeric (ds$chol)
-ds$thalachh <- as.numeric (ds$thalachh)
-ds$oldpeak <- as.numeric (ds$oldpeak)
-
-myCaja <- function(campo) {
-  myPlot <- ggplot(ds, aes(val, fill = output)) +
-    geom_bar() + labs(x = campo, y = "Observaciones") +
-    guides(fill = guide_legend(title = "")) +
-    scale_fill_manual(values = c("black", "#008000")) +
-    theme(axis.text.x = element_text(angle = 10, vjust = 1, hjust=0.5)) 
-  return (myPlot)
-}
-
-grid.arrange(myHist1("output"), myHist1("sex"), myHist1("cp"), 
-             myHist1("fbs"), myHist1("restecg"), myHist1("exng"), 
-             myHist1("slp"), myHist1("caa"), myHist1("thall"),
-             ncol = 3, nrow = 3)
-
-myHist1 (chol)
-
-ds["sex"]
-
-plotList<- list(5)
-plotList2<- list(5)
-
-for(i in 10:14){
-  col_names <- names(ds)[i]
-  col_val <- ds[,i]
-  p <- ggplot(ds, aes(x=output, y=col_val, fill=output)) +
-    geom_boxplot(alpha=0.5) +
-    labs(x = "output", y = col_names) +
-    theme(legend.position="none") 
-  plotList[[i-9]] <- p
-  p <- ggplot(ds, aes(x=col_val)) + geom_histogram() +
-    labs(x = col_names)
-  plotList2[[i-9]] <- p
-  print (ggplot(ds, aes(x=col_val)) + geom_histogram() +
-    labs(x = col_names))
-}
-
-kk1 <- ggplot(ds, aes(x=output, y=ds[,10], fill=output)) +
-    geom_boxplot(alpha=0.5) +
-    labs(x = "output", y = names(ds)[10]) +
-    theme(legend.position="none") 
-kk2 <- ggplot(ds, aes(x=output, y=ds[,11], fill=output)) +
-    geom_boxplot(alpha=0.5) +
-    labs(x = "output", y = names(ds)[11]) +
-    theme(legend.position="none") 
-plotList <- list(kk1, kk2) 
-
-do.call("grid.arrange", c(plotList, ncol = 3))
-do.call("grid.arrange", c(plotList2, ncol = 3))     
-
-plotList[1]
-plotList[2]
+             myHistNum("thalachh"), myHistNum("oldpeak"),
+             ncol = 2, nrow = 3)
 
 ```
 
-Al analizar las distribuciones en las histogramas sin tener en cuenta los boxplots, podemos decir que las observaciones son mas frecuentes cuando:
+Al analizar las distribuciones en los histogramas, podemos decir que las observaciones son mas frecuentes cuando:
 
 -   Picos anteriores (oldpeak) son más cercano a 0
 
@@ -408,17 +331,27 @@ Al analizar las distribuciones en las histogramas sin tener en cuenta los boxplo
 
 -   Y edad entre 40 y 70 años.
 
-Pero al analizar los diagramas de cajas segun la variable objetivo, ya se pueden intuir alguna conclusión de correlacion. Por ejemplo, parece que es más probable tener ataque al corazón (output = 1) cuando:
+Los histogramas presentados no nos permiten diferenciar comportamientos distintos dependiendo de la variable objetivo. Veamos en diagrams de cajas:
+
+```{r}
+myCaja <- function(campo) {
+  myPlot <- ggplot(ds, aes(x=output, y=ds[,campo], fill=output)) +
+    geom_boxplot(alpha=0.5) +
+    labs(x = "output", y = campo) +
+    theme(legend.position="none") 
+  return (myPlot)
+}
+
+grid.arrange(myCaja("age"), myCaja("trtbps"), myCaja("chol"), 
+             myCaja("thalachh"), myCaja("oldpeak"),
+             ncol = 3, nrow = 2)
+```
+
+Se pueden intuir alguna correlación con la variable objetivo. Por ejemplo, parece que es más probable tener ataque al corazón (output = 1) cuando:
 
 -   Picos anteriores (oldpeak) son más cercano a 0
 
 -   Frecuencia cardiaca (thalachh) con valores entre 150y 170.
-
--   Presión arterial en reposo está entre 100 y 140 Hg.
-
--   Colesterol esta entre 205 y 265 mg/dl segun BMI sensor
-
--   Y edad entre 45 y 59 años.
 
 Estudiemos la correlación entre las variables. Si encontramos alguna muy relacionadas podemos quitarlas del modelo y reducir su complejidad:
 
@@ -436,13 +369,6 @@ corrplot(matriz, type="upper", order="hclust", tl.col="black", tl.srt=45)
 
 Observamos que no hay una alta correlación entre las variables por lo que no prescindiremos de ninguna.
 
-```{r}
-# o2_saturation <- read.csv("../data//o2Saturation.csv")
-# o2_saturation.head()
-# ds$o2_Saturation = o2_saturation$X98.6
-# ha_df.head()
-```
-
 # 3. Limpieza de los datos
 
 > 3.1. ¿Los datos contienen ceros o elementos vacíos? Gestiona cada uno de estos casos
@@ -451,21 +377,17 @@ Observamos que no hay una alta correlación entre las variables por lo que no pr
 
 En el punto anterior se ha analizado el dataset y observando los resultados, ya podemos obtener algunas conclusiones sin necesidad de desarrollar más código:
 
--   **No se aprecian valores ausentes**, muchas veces identificados por "na". A veces se identifican con '0', pero este valor, en nuestro caso, en la mayoría de las variables tiene un significado concreto y son recolectador y/o insertados sin transformación previa alguna. Asumiendo que los datos son recogidos sin errores alguno, podemos afirmar que no hay ausencia de valores. En el caso de que el "0" signifique ausencia de valores, en ese supuesto habría que transformar estos "0" con un valor mas ideoneo, por ejemplo la media o la mediana para la variable numerica y moda para la categorica.Pero para nuestro caso asumimos que no ha habido ningun error al recolectar estos datos ni se ha insertado "0" como sustituyente al dato faltante. Por tanto, estos valores son aceptados como uno de los valores listados para el atributo correspondiente.
+-   **No se aprecian valores ausentes**. Asumiendo que los datos son recogidos sin errores alguno, podemos afirmar que no hay ausencia de valores ya estos se suelen identifcar con:
 
--   En los diagramas de cajas, vemos varios valores fuera de los rangos normales. Estos son valores extremos que habría que consultar a un experto si es posible que fueran erróneos para descartarlos. Si sorprende mucho la **observación con colesterol mayor, que está muy separada de los rangos normales**, la cual estamos seguros de que es un dato erroneo. Por tanto, habria que estudiar todo los casos de valores extremos, los cuales se encuentra superiores al valor maximo y inferiores al valor minimo de la variable correspondiente. Y Asegurar que estos valores fuera del rango [minimo, maximo] no sean datos erroneos. En caso de que no fueran datos erroneas, debemos analizarlos con un experto en este campo para asegurar que estos valores son aceptables o no.
+    -   "na" -\> No se encuentra dicha cadena en el dataset
 
-La gestión de valores atípicos (outlier management) es la ciencia de investigar y aplicar un tratamiento adecuado a los valores atípicos en los datos. Puede ser tentador simplemente eliminar los registros donde hay valores atípicos en el conjunto de datos, pero no siempre es el mejor enfoque. El método de tratamiento de valores atípicos puede variar de un caso a otro y debe discutirse con la empresa antes de finalizar el método. Existen diferentes enfoques, como reemplazar el valor atípico con el valor medio o el valor mediano o, en algunos casos, descartar la observación con el valor atípico sospechoso para evitar cualquier sesgo en ellos. Tendemos a eliminar los valores atípicos si se deben a errores de entrada de datos causados por errores humanos, errores de procesamiento de datos.
+    -   "0" -\> En el caso de estudio, la mayoría de las variables tiene un significado concreto para ese valor y son recolectador y/o insertados sin transformación previa alguna.
 
-Vamos a gestionar el último valor extremo de Colestrol, del cual estamos seguros que es valor extremo inaceptable:
+-   En los diagramas de cajas, vemos varios valores fuera de los rangos normales. Estos son valores extremos, pero no tienen por que ser erroneos (outliers), por lo que sería recomendable consultar a un experto antes de descartarlos. En nuestro caso entendemos todos como válidos excepto un caso que destaca: una **observación con extremadamente elevado, que está muy separada de los rangos normales**.
 
-```{r}
+La gestión de valores atípicos (outlier management) es la ciencia de investigar y aplicar un tratamiento adecuado a los valores atípicos en los datos. Puede ser tentador simplemente eliminar los registros donde hay valores atípicos en el conjunto de datos, pero no siempre es el mejor enfoque. El método de tratamiento de valores atípicos puede variar de un caso a otro y debe discutirse con la empresa antes de finalizar el método. Existen diferentes enfoques, como **reemplazar el valor atípico con el valor medio o la mediana** o, en algunos casos, **descartar la observación con el valor atípico sospechoso para evitar cualquier sesgo en ellos**. Tendemos a eliminar los valores atípicos si se deben a errores de entrada de datos causados por errores humanos, errores de procesamiento de datos.
 
-#max(ds$chol,4)
-ds %>%                                      # Top N highest values 
-  arrange(desc(chol)) %>% 
-  slice(1:8)
-```
+Vamos a gestionar el último valor extremo de Colestrol, del cual estamos seguros que es valor extremo inaceptable optando por sustituirlo por la media:
 
 ```{r}
 max(ds$chol)
@@ -475,294 +397,155 @@ ds [ds$chol==max(ds$chol), ]
 ds [ds$chol==max(ds$chol), ]$chol <- mean (ds$chol)
 ```
 
-Obviamente, en un caso real, esta decisión debería tomarse junto con un experto que determine si realmente los demas valores extremos son un valores erroneos o no decidiendo si:
+Con el siguiente código podríamos detectar otros valores extremos y candidatos a outliers. Como se ha comentado, lo ideal es revisar con un experto la estrategia a seguir:
 
--   Se elimina de la muestra
-
--   Se ajusta su valor a la media u otra variable estadística
-
-<<<<<<< HEAD
--   Se considera con valor ausente (Balpreet:?)
-=======
--   Se considera con valor ausente de la columna  
->>>>>>> ef8b8bc834e6a053c421d8032c68dee78d617056
+```{r}
+ds %>%
+  arrange(desc(chol)) %>% 
+  slice(1:8)
+```
 
 # 4. Análisis de los datos
-
-`Pendiente: La solucion oficial de la PEC2 puede venir muy bien para esto. Sale el día 2/6`
 
 ## 4.1. Selección de los grupos de datos
 
 > Selección de los grupos de datos que se quieren analizar/comparar (p. ej., si se van a comparar grupos de datos, ¿cuáles son estos grupos y qué tipo de análisis se van a aplicar?)
 
-Teniendo en cuenta el output, procederemos a analizar los diferentes atributos respecto este output. Por tanto, procederemos a hacer los comparaciones entre siguientes grupos y siguientes test:
+Teniendo en cuenta a **output como la variable objetivo**, procederemos a compararla con los diferentes atributos. En los siguientes puntos procederemos a hacer los comparaciones entre siguientes grupos y estrategias:
 
-- Output y atributos categoricos ['sex', 'cp', 'fbs', 'restecg','exng','slp', 'caa', 'thall']: tenemos dos variables categóricas y haremos un test de χ2 para ver si existen diferencias significativas entre los grupos definidos. Pero en nuestro caso, tenemos una muestra pequeña, portanto, usaremos Fisher Test.
+-   Output y atributos categóricos ['sex', 'cp', 'fbs', 'restecg','exng','slp', 'caa', 'thall']: tenemos **dos variables categóricas** y haremos un test de χ2 para ver si existen diferencias significativas entre los grupos definidos. Pero en nuestro caso, tenemos una **muestra pequeña**, por tanto, **usaremos Fisher Test**.
 
-- Output y variables numericas nominal ['age', 'trtbps', 'chol', 'thalachh', 'oldpeak']: si cumple normalidad y homocedasticidad con output, aplicamos tStudent, si no, test de Mann-Whitney.
+-   Output y variables numéricas nominal ['age', 'trtbps', 'chol', 'thalachh', 'oldpeak']: comparamos una **variable categórica con otra numérica**. La estrategia será distinta según:
 
+    -   **si cumple normalidad y homocedasticidad con output -\> aplicamos tStudent,**
+
+    -   **si no -\> test de Mann-Whitney.**
 
 ## 4.2. Comprobación de la normalidad y homogeneidad de la varianza.
 
 Comprobamos la normalidad y homogeneidad de la varianza:
 
-Testing normality assumption
-
 ```{r}
-library(EnvStats)
 ds$age %>% qqPlot(dist="norm", ylab = "Age")
-```
-
-```{r}
-library(EnvStats)
 ds$trtbps %>% qqPlot(dist="norm", ylab = "trtbps")
-```
-```{r}
-library(EnvStats)
 ds$chol %>% qqPlot(dist="norm", ylab = "chol")
-```
-```{r}
-library(EnvStats)
 ds$thalachh %>% qqPlot(dist="norm", ylab = "thalachh")
-```
-
-```{r}
-library(EnvStats)
 ds$chol %>% qqPlot(dist="norm", ylab = "oldpeak")
 ```
+
 ```{r}
 shapiro.test(ds$age)
-```
-El valor P es inferior a 0,05, lo que significa que los datos de edad no se distribuyen normalmente.
-
-```{r}
 shapiro.test(ds$trtbps)
-```
-
-Los datos trtbps no se distribuyen normalmente.
-
-```{r}
 shapiro.test(ds$chol)
-```
-
-Los datos chol no se distribuyen normalmente.
-
-
-```{r}
 shapiro.test(ds$thalachh)
-```
-Los datos de thalachh no se distribuyen normalmente.
-
-```{r}
 shapiro.test(ds$oldpeak)
 ```
-Los datos del pico anterior no se distribuyen normalmente.
 
-
-Podemos ver que no tenemos normalidad en nuestros datos numéricos.
+Vemos que en todos los casos, el valor P es inferior a 0,05, lo que significa que **no podemos asumir normalidad en ninguno de las variables numéricas.**
 
 Ahora veamos homogeneidad de varianza mediante Levene Test (no FTest) ya que no cumplimos el requisito de normalidad:
 
 ```{r}
 leveneTest(age ~ output, data = ds)
-```
-
-El valor p es 0.006079 es más bajo que el nivel de significancia de 0.05. Podemos concluir que existe una diferencia significativa entre las varianzas de la muestra probada.
-
-```{r}
 leveneTest(trtbps ~ output, data = ds)
-```
-
-El valor p es 0.1818 es mayor que el nivel de significancia de 0.05. Podemos concluir que no hay una diferencia significativa entre las varianzas de la muestra probada.
-
-```{r}
 leveneTest(chol ~ output, data = ds)
-```
-
-El valor p es 0.7264 es mayor que el nivel de significancia de 0.05. Podemos concluir que no hay una diferencia significativa entre las varianzas de la muestra probada.
-
-```{r}
 leveneTest(thalachh ~ output, data = ds)
-```
-El valor p es 0.02374 es más bajo que el nivel de significancia de 0.05. Podemos concluir que existe una diferencia significativa entre las varianzas de la muestra probada.
-
-```{r}
 leveneTest(oldpeak ~ output, data = ds)
 ```
-El valor p es inferior al nivel de significación de 0,05. Podemos concluir que existe una diferencia significativa entre las varianzas de la muestra probada.
 
-Por tanto, incumplimos la asumpciones de que el dataset sea normal y tenga homogeneidad de varianza.
+Cuando tenemos un valor de p por encima de 0.05 (nivel de significancia), podemos concluir que existe una no diferencia significativa entre las varianzas de la muestra probada y, por tanto nos encontramos con homogeniedad en la varianza. Según esto, nos encontramos con:
 
+-   Homogeniedad de las varianzas: trtbps, chol
+
+-   No homogeniedad de las varianzas: age, thalachh, oldpeak
+
+Por tanto, **incumplimos la asunciones de que el dataset sea normal y tenga homogeneidad de varianza.**
 
 ## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos.
 
-> En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes. 
+> En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
 
-Primero haremos Fisher Test para analizar la independencia de los grupos de datos:
+### Fisher test
 
-La prueba exacta de Fisher determinará si existe una relación estadísticamente significativa entre 2 atributos categóricos.
+Debido a que tenemos un dataset pequeño (\<1000) y ya hemos visto que no podemos asegurar normalidad, tenemos que utilizar fisher test para analizar la correlacion entre variables en vez de **Chi-cuadrado.**
 
-Nulo (H0): No existe asociación entre ambos atributos categóricos. son independientes
-Alternativa (HA): Existe una relación entre ellos en la población.
-
-Además, la prueba de Fisher es una prueba estadística que se utiliza para determinar si las proporciones de las categorías en dos variables de grupo difieren significativamente entre sí.
+Dado que vamos a hacer el mismo proceso con todas las variables clasificadoras, hacemos una función para facilitar código legible:
 
 ```{r}
-counts <- table(ds$output, ds$sex)
-counts / rowSums(counts) 
+myFishertest <- function (campo) {
+  counts <- table(ds$output, ds[,campo])
+  print (campo)
+  print (counts / rowSums(counts))
+  print (fisher.test(counts))
+}
 ```
 
-Podemos ver que el 43,9% de sexo "0" tuvieron heart attack, por debajo del sexo "1" con probabilidad de 56,09% . Es sorprendente esta diferencia. Pero para salir de la duda, necesitamos una prueba estadística. La prueba de chi-cuadrado se puede utilizar para probar la correlación de dos variables categóricas. Pero usaremos Fisher test porque nuestro dataset no es suficientemente grande (<1000) como para aplicar Chi-cuadrado.
+Este método nos ofrece una tabla de frecuencias y el resultado del test de fisher que puede sacar conclusiones sobre la tabla.
 
+Si el resultado del fisher test nos da un p-value por debajo de su nivel de significación (p. ej., 0,05), se rechaza la hipótesis nula, o sea, que no hay relación entre las variables.
+
+Aplicamos el método con todas las variables categóricas:
 
 ```{r}
-fisher.test(counts)
+myFishertest ("sex")
+myFishertest ("cp")
+myFishertest ("fbs")
+myFishertest ("restecg")
+myFishertest ("exng")
+myFishertest ("slp")
+myFishertest ("caa")
+myFishertest ("thall")
+myFishertest ("output")
 ```
 
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechace la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+A continuación, se resume las conclusiones obtenidas en la siguiente tabla:
 
-Por otro lado, La hipótesis nula es que hombres y mujeres tienen la misma probabilidad de tener un heart attack. El valor p es bajo. Por tanto, rechazamos la hipótesis de que ambos sexos tienen la misma tasa de sufrir un infarto. Mirando los datos, es más alto para el tipo de sexo "1".
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+|         | **p-value** | **Relaci-onadas** | **Tabla de frecuencias**                                                                                                                                                    |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| sex     | = 1.01e-06  | Sí                | Podemos ver que el 43,9% de sexo "0" tuvieron heart attack, por debajo del sexo "1" con probabilidad de 56,09%                                                              |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| cp      | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadísticas anteriores.    |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| fbs     | = 0.746     | No                | No rechazamos la hipótesis nula y, por tanto, los diferentes tipos de cps tienen más o menos la misma probabilidad de tener un ataque infarto.                              |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| restecg | = 0.004462  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la gráfica y estadísticas anteriores. \|   |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| exng    | = 3.438e-14 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|  |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| slp     | = 1.769e-11 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| caa     | \< 2.2e-16  |                   | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| thall   | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en thall=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \| |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| output  | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula, como era de esperar ya que comparamos la misma variable\|                                                                                     |
++---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
-Haremos lo mismo con otros atributos:
+### Whitney
 
-```{r}
-counts <- table(ds$output, ds$cp)
-counts / rowSums(counts) 
-```
-
-```{r}
-fisher.test(counts)
-```
-
-Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechace la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-```{r}
-counts <- table(ds$output, ds$fbs)
-counts / rowSums(counts) 
-```
-
-```{r}
-fisher.test(counts)
-```
-No rechazamos la Ho  y, por tanto, los diferentes tipos de cps tienen mas o menos la misma probabilidad de tener un ataque infarto.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-```{r}
-counts <- table(ds$output, ds$restecg)
-counts / rowSums(counts) 
-```
-
-```{r}
-fisher.test(counts)
-```
-Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la grafica y estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-```{r}
-counts <- table(ds$output, ds$exng)
-counts / rowSums(counts) 
-```
-
-```{r}
-fisher.test(counts)
-```
-
-Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la grafica y las estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-```{r}
-counts <- table(ds$output, ds$slp)
-counts / rowSums(counts) 
-```
-
-```{r}
-fisher.test(counts)
-```
-Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la grafica y las estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-
-```{r}
-counts <- table(ds$output, ds$caa)
-counts / rowSums(counts) 
-```
-```{r}
-fisher.test(counts)
-```
-
-
-Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la grafica y las estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-
-```{r}
-counts <- table(ds$output, ds$thall)
-counts / rowSums(counts) 
-fisher.test(counts)
-```
-
-Lo mismo aqui, rechazamos la hipotesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en thall=2 teniendo en cuenta la grafica y las estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
-```{r}
-counts <- table(ds$output, ds$output)
-counts / rowSums(counts) 
-fisher.test(counts)
-```
-Aqui podemos rechazar la hipotesis nula de que las medias entre los 2 outputs son iguales y decir que hay mas probabilidad de que una persona tenga ataque de corazon según las graficas y estadisticas anteriores.
-
-Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechaza la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
-
----
-Ahora vamos a estudiar los atributos numericos versus el output mediante  mediante Whitney.
+Ahora vamos a estudiar los atributos numéricos versus el output mediante mediante Whitney.
 
 ```{r}
 str(ds[10:14])
-```
-
-```{r}
 wilcox.test(age ~ output, data=ds) 
-```
- 
-
-```{r}
 wilcox.test(trtbps ~ output, data=ds) 
-```
-
-
-```{r}
 wilcox.test(chol ~ output, data=ds) 
-```
-
-
-```{r}
 wilcox.test(thalachh ~ output, data=ds) 
-```
-
-
-```{r}
 wilcox.test(oldpeak ~ output, data=ds) 
 ```
-Con un nivel de significancia de .05, rechazamos Hº y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
 
+Con un nivel de significancia de .05, rechazamos hipótesis nula y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. También que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
 
-```{r}
-install.packages("ggcorrplot")
-library(ggcorrplot)
+### Análisis de componentes principales
+
+```{r warning=FALSE}
+
 numerical_data <- ds[10:14]
 data_normalized <- scale(numerical_data)
 corr_matrix <- cor(data_normalized)
 ggcorrplot(corr_matrix)
 ```
-
 
 ```{r}
 data.pca <- princomp(corr_matrix)
@@ -771,17 +554,17 @@ summary(data.pca)
 
 Los resultados anteriores muestran cuán importantes son estos 4 componentes de PCA considerando lo siguiente:
 
-- El componente 1 explica el 57,70% de la varianza total.
-- El componente 2 explica el 18,87% de la varianza total.
-- El componente 3 explica el 14,56% de la varianza total.
-- El componente 4 explica el 8,56% de la varianza total.
+-   El componente 1 explica el 57,70% de la varianza total.
+-   El componente 2 explica el 18,87% de la varianza total.
+-   El componente 3 explica el 14,56% de la varianza total.
+-   El componente 4 explica el 8,56% de la varianza total.
 
-Extra: es genial tener los primeros 4 componentes, pero ¿qué significan realmente? Esto se puede responder explorando cómo se relacionan con cada columna utilizando las cargas de cada componente principal. 
-
+Extra: es genial tener los primeros 4 componentes, pero ¿qué significan realmente? Esto se puede responder explorando cómo se relacionan con cada columna utilizando las cargas de cada componente principal.
 
 ```{r}
 data.pca$loadings[, 1:4]
 ```
+
 ¿Cómo interpretamos estos resultados? Por ejemplo, centrándonos en el Componente 1, debemos mencionar que el atributo "thalachh" impacta negativamente en el PCA y los otros factores de forma positiva. Y el mismo enfoque se aplica a los otros componentes.
 
 # 5. Representación de los resultados
@@ -796,37 +579,39 @@ En el desarrollo del ejercicio se han ido utilizando diagramas representativos. 
 
 Based on the results given above, we have the following conclusions:
 
-- Tenemos más probabilidad de tener un caso de ataque cardiaco.
-- Sexo 0 tiene más probabilidad de tener un ataque cardiaco.
-- Cp tipo 2 tiende a tener más probabilidad de ataque cardiaco.
+-   Tenemos más probabilidad de tener un caso de ataque cardíaco.
 
-- Fbs con anomalía en la onda ST-T tiene 62% de probabilidad de tener el ataque cardiaco.
+-   Sexo 0 tiene más probabilidad de tener un ataque cardíaco.
 
-- Respecto variable angina inducida por el ejercicio (exng), podemos decir 69,45% de los casos de personas de tener angina no inducida por el ejercicio tienen ataque cardiaco. Este baja a 23% cuando el ataque cardiaco es debido a angina inducida por el ejercicio.
+-   Cp tipo 2 tiende a tener más probabilidad de ataque cardíaco.
 
-- Slope tipo "2" tiene más probabilidad de tener el ataque cardiaco.
+-   Fbs con anomalía en la onda ST-T tiene 62% de probabilidad de tener el ataque cardíaco.
 
-- Respecto la caa, personas con 0 venas principales tienen más probabilidad de tener el ataque cardiaco.
+-   Respecto variable angina inducida por el ejercicio (exng), podemos decir 69,45% de los casos de personas de tener angina no inducida por el ejercicio tienen ataque cardiaco. Este baja a 23% cuando el ataque cardíaco es debido a angina inducida por el ejercicio.
 
-- Respecto thall, decir que personas con resultado "2" de prueba de Thalium Stress tiene una probabilidad de 78,18% de tener el ataque cardiaco.
+-   Slope tipo "2" tiene más probabilidad de tener el ataque cardíaco.
+
+-   Respecto la caa, personas con 0 venas principales tienen más probabilidad de tener el ataque cardiaco.
+
+-   Respecto thall, decir que personas con resultado "2" de prueba de Thalium Stress tiene una probabilidad de 78,18% de tener el ataque cardiaco.
 
 Y es más probable tener ataque al corazón (output = 1) cuando:
 
 -   Picos anteriores (oldpeak) son más cercano a 0
 
 -   Frecuencia cardiaca (thalachh) con valores entre 150y 170.
--  Presión arterial en reposo está entre 100 y 140 Hg.
--  Colesterol esta entre 205 y 265 mg/dl  segun BMI sensor
-- Y edad entre 45 y 59 años.
 
-Despues de comprobar qqtest, shapiro test y levene test comprobamos que incumplimos la asumpciones de que el dataset sea normal y tenga homogeneidad de varianza.
+-   Presión arterial en reposo está entre 100 y 140 Hg.
 
-Despues de hacer Fisher Test, pudimos comprobar que los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Y Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+-   Colesterol esta entre 205 y 265 mg/dl según BMI sensor
 
+-   Y edad entre 45 y 59 años.
 
-Respecto las variables numericas y mediante el Whitney Test, pudimos comprobar que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
+Después de comprobar qqtest, shapiro test y levene test comprobamos que incumplimos la asunciones de que el dataset sea normal y tenga homogeneidad de varianza.
 
+Después de hacer Fisher Test, pudimos comprobar que los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Y Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
 
+Respecto las variables numéricas y mediante el Whitney Test, pudimos comprobar que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
 
 # 7. Código
 
@@ -843,5 +628,3 @@ Se puede visualizar en cualquiera de estas dos alternativas:
 -   Github: <https://github.com/dcanete/heart>
 
 -   Drive: <https://drive.google.com/open?id=1gko9Vw2D3FQP5aewnnfp-hPio-AZ70KZ>
-
-

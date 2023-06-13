@@ -57,7 +57,7 @@ if(!require("car")) install.packages("car"); library("car")
 if(!require("ggcorrplot")) install.packages("ggcorrplot"); library("ggcorrplot")
 
 # Cargamos los datos
-ds<-read.csv("../data/heart.csv")
+ds<-read.csv("heart.csv")
 ```
 
 # 1. Descripción del dataset
@@ -461,6 +461,8 @@ Cuando tenemos un valor de p por encima de 0.05 (nivel de significancia), podemo
 
 Por tanto, **incumplimos la asunciones de que el dataset sea normal y tenga homogeneidad de varianza.**
 
+Levene's test is an inferential statistic used to assess the equality of variances for a variable calculated for two or more groups. For this test, a p-value of less than 0.05 indicates that there is, in fact, enough variance in the sample to account for possible mean differences.
+
 ## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos.
 
 > En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.
@@ -497,29 +499,30 @@ myFishertest ("caa")
 myFishertest ("thall")
 myFishertest ("output")
 ```
+When your p-value is below your significance level (e.g., 0.05), reject the null hypothesis. The sample data is strong enough to conclude that a relationship between the categorical variables exists in the population. Knowing the value of one variable provides information about the value of the other variable. 
 
 A continuación, se resume las conclusiones obtenidas en la siguiente tabla:
 
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 |         | **p-value** | **Relaci-onadas** | **Tabla de frecuencias**                                                                                                                                                    |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| sex     | = 1.01e-06  | Sí                | Podemos ver que el 43,9% de sexo "0" tuvieron heart attack, por debajo del sexo "1" con probabilidad de 56,09%                                                              |
+| sex     | = 1.01e-06  | Sí                | Podemos ver que el 43,9% de sexo "0" tuvieron heart attack, por debajo del sexo "1" con probabilidad de 56,09%. Tambien, gracias al test, podemos confirmar que la variable sexo afecta a la variable dependiente output.                                                             |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cp      | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadísticas anteriores.    |
+| cp      | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadísticas anteriores.Tambien, gracias al test, podemos confirmar que la variable cp afecta a la variable dependiente output.    |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| fbs     | = 0.746     | No                | No rechazamos la hipótesis nula y, por tanto, los diferentes tipos de cps tienen más o menos la misma probabilidad de tener un ataque infarto.                              |
+| fbs     | = 0.746     | No                | No rechazamos la hipótesis nula y, por tanto, los diferentes tipos de cps tienen más o menos la misma probabilidad de tener un ataque infarto. Tambien, gracias al test, podemos confirmar que la variable fbs no afecta a al output de la variable dependiente.                             |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| restecg | = 0.004462  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la gráfica y estadísticas anteriores. \|   |
+| restecg | = 0.004462  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la gráfica y estadísticas anteriores. \|   | Tambien, gracias al test, podemos confirmar que la variable restecg afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| exng    | = 3.438e-14 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|  |
+| exng    | = 3.438e-14 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|  |Tambien, gracias al test, podemos confirmar que la variable exng afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| slp     | = 1.769e-11 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |
+| slp     | = 1.769e-11 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |Tambien, gracias al test, podemos confirmar que la variable slp afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| caa     | \< 2.2e-16  |                   | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |
+| caa     | \< 2.2e-16  |                   | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |Tambien, gracias al test, podemos confirmar que la variable caa afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | thall   | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en thall=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \| |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| output  | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula, como era de esperar ya que comparamos la misma variable\|                                                                                     |
+| output  | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula, como era de esperar ya que comparamos la misma variable\|         
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 ### Whitney
@@ -535,7 +538,7 @@ wilcox.test(thalachh ~ output, data=ds)
 wilcox.test(oldpeak ~ output, data=ds) 
 ```
 
-Con un nivel de significancia de .05, rechazamos hipótesis nula y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. También que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
+Con un nivel de significancia de .05, rechazamos hipótesis nula y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. También que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa. 
 
 ### Análisis de componentes principales
 
@@ -577,6 +580,7 @@ En el desarrollo del ejercicio se han ido utilizando diagramas representativos. 
 
 > A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
 
+
 Based on the results given above, we have the following conclusions:
 
 -   Tenemos más probabilidad de tener un caso de ataque cardíaco.
@@ -612,6 +616,97 @@ Después de comprobar qqtest, shapiro test y levene test comprobamos que incumpl
 Después de hacer Fisher Test, pudimos comprobar que los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Y Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
 
 Respecto las variables numéricas y mediante el Whitney Test, pudimos comprobar que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
+
+
+```{r}
+install.packages("tidymodels")
+library(tidymodels)
+heart.split <- initial_split(ds)
+heart.train <- training(heart.split)
+heart.test <- testing(heart.split)
+#logistic regression having all the predictors.
+heart.full <- glm(output~., data = heart.train, family = "binomial")
+summary(heart.full)
+```
+
+
+```{r}
+# set engine
+heart_model <- logistic_reg() %>%
+  set_engine("glm")
+
+# create recipe
+heart_recipe <- recipe(output ~., data = heart.train) %>%
+  step_rm(fbs) %>%
+  step_rm(age) %>%
+  step_rm(chol) %>%
+  step_zv(all_predictors())
+
+# build work flow
+heart_wflow <- workflow() %>%
+  add_model(heart_model) %>%
+  add_recipe(heart_recipe)
+
+# fit training data through the work flow 
+heart_fit <- heart_wflow %>%
+  fit(data = heart.train)
+heart.train.pred = predict(heart_fit, new_data = heart.train)
+
+traincomp <- data.frame(heart.train$output, heart.train.pred)
+colnames(traincomp) <- c("train.response", "train.prediction")
+
+install.packages("pROC")
+library(pROC)
+heart.roc <- roc(response = ordered(traincomp$train.response), predictor = ordered(traincomp$train.prediction))
+
+plot(heart.roc, print.thres = "best", main = "Receiver Operating Characteritic Technique Plot")
+```
+
+```{r}
+print(auc(heart.roc))
+```
+```{r}
+#Perform 5-fold cross validation
+set.seed(470)
+folds <- vfold_cv(heart.train, v=5)
+
+heart_fit_rs <- heart_wflow %>%
+  fit_resamples(folds)
+
+metrics <- data.frame(collect_metrics(heart_fit_rs, summarize = FALSE))
+
+metrics <- metrics %>%
+  select(-.config)
+colnames(metrics) <- c("Fold", "Metric", "Estimator", "Estimate")
+metrics
+```
+```{r}
+heart.test.pred = predict(heart_fit, new_data=heart.test, type="response")
+
+y_pred_num <- ifelse(heart.test.pred > 0.5, 1, 0)
+y_pred <- factor(y_pred_num, levels=c(0, 1))
+y_act <- testData$target
+
+# Result : Prediction Accuracy (Proportion of predicted target that matches with actual target)
+mean(y_pred == y_act)
+
+```
+
+
+
+```{R}
+#Generate predictions on testing data
+heart_disease_pred <- predict(heart_fit, new_data = heart.test) %>%
+  bind_cols(heart.test %>% select(output))
+
+test_accuracy <- accuracy(heart_disease_pred, truth = heart_disease, estimate = .pred_class)
+test_specificity <- spec(heart_disease_pred, truth = heart_disease, estimate = .pred_class)
+test_sensitivity <- sens(heart_disease_pred, truth = heart_disease, estimate = .pred_class)
+
+test.values <- data.frame(test_accuracy$.estimate, test_sensitivity$.estimate, test_specificity$.estimate)
+colnames(test.values) <- c("Test set Accuracy", "Test set Sensitivity", "Test set Specificity")
+test.values
+```
 
 # 7. Código
 

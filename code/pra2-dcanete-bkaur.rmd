@@ -458,6 +458,8 @@ leveneTest(thalachh ~ output, data = ds)
 leveneTest(oldpeak ~ output, data = ds)
 ```
 
+La prueba de Levene es una estadística inferencial utilizada para evaluar la igualdad de varianzas de una variable calculada para dos o más grupos. Para esta prueba, un valor p de menos de 0,05 indica que, de hecho, hay suficiente variación en la muestra para explicar las posibles diferencias de medias.
+
 Cuando tenemos un valor de p por encima de 0.05 (nivel de significancia), podemos concluir que existe una no diferencia significativa entre las varianzas de la muestra probada y, por tanto nos encontramos con homogeniedad en la varianza. Según esto, nos encontramos con:
 
 -   Homogeniedad de las varianzas: trtbps, chol
@@ -466,7 +468,7 @@ Cuando tenemos un valor de p por encima de 0.05 (nivel de significancia), podemo
 
 Por tanto, **incumplimos la asunciones de que el dataset sea normal y tenga homogeneidad de varianza.**
 
-Levene's test is an inferential statistic used to assess the equality of variances for a variable calculated for two or more groups. For this test, a p-value of less than 0.05 indicates that there is, in fact, enough variance in the sample to account for possible mean differences.
+
 
 ## 4.3. Aplicación de pruebas estadísticas para comparar los grupos de datos.
 
@@ -532,7 +534,7 @@ A continuación, se resume las conclusiones obtenidas en la siguiente tabla:
 
 ### Whitney
 
-Ahora vamos a estudiar los atributos numéricos versus el output mediante mediante Whitney.
+Ahora vamos a estudiar los atributos numéricos versus el output mediante mediante Whitney Wilcoxon Rank sum Test.
 
 ```{r}
 str(ds[10:14])
@@ -543,7 +545,7 @@ wilcox.test(thalachh ~ output, data=ds)
 wilcox.test(oldpeak ~ output, data=ds) 
 ```
 
-Con un nivel de significancia de .05, rechazamos hipótesis nula y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. También que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa. 
+Con un nivel de significancia de .05, rechazamos hipótesis nula y podemos concluir que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. También que la diferencia entre la media de la población de salida y el atributo numérico correspondiente es estadísticamente significativa. 
 
 ### Análisis de componentes principales
 
@@ -585,10 +587,7 @@ En el desarrollo del ejercicio se han ido utilizando diagramas representativos. 
 
 > A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?
 
-
-Based on the results given above, we have the following conclusions:
-
--   Tenemos más probabilidad de tener un caso de ataque cardíaco.
+En base a los resultados antes expuestos, tenemos las siguientes conclusiones. Tenemos más probabilidad de tener un caso de ataque cardíaco:
 
 -   Sexo 0 tiene más probabilidad de tener un ataque cardíaco.
 
@@ -618,9 +617,9 @@ Y es más probable tener ataque al corazón (output = 1) cuando:
 
 Después de comprobar qqtest, shapiro test y levene test comprobamos que incumplimos la asunciones de que el dataset sea normal y tenga homogeneidad de varianza.
 
-Después de hacer Fisher Test, pudimos comprobar que los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Y Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
+Después de hacer Fisher Test, pudimos comprobar que los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Y conocer el valor de una variable proporciona información sobre el valor de la otra variable.
 
-Respecto las variables numéricas y mediante el Whitney Test, pudimos comprobar que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la mediana de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
+Respecto las variables numéricas y mediante el Whitney Test, pudimos comprobar que todos los atributos numéricos y la salida en el conjunto de datos provienen de poblaciones no idénticas. Podemos concluir que la diferencia entre la media de la población de salida y el atributo numérico correspondiente es estadísticamente significativa.
 
 
 ```{r}

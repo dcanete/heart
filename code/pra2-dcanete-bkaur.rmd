@@ -105,6 +105,8 @@ En primer lugar, se estudia la documentación disponible en <https://www.kaggle.
         -   Valor 2: mostrar hipertrofia ventricular izquierda probable o definitiva según los criterios de Estes
 
     -   thalach: frecuencia cardíaca máxima alcanzada
+    
+    - slp: se refiere a la pendiente de una línea de tendencia trazada en un gráfico.
 
     -   target: 0= menos posibilidades de ataque al corazón 1= más posibilidades de ataque al corazón
 
@@ -179,17 +181,17 @@ Los campos no son exactamente como aparece en la documentación, pero se puede e
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
 | oldpeak    | Pico anterior                                                                                                          | num (0-6.2)                                       |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| slp        | Tendencia. Es una codificación, pero **no se conoce el significado** de cada valor.                                    | int (0, 1 ó 2)                                    |
+| slp        | Tendency Slope. Se refiere a la pendiente de una línea de tendencia.                                  | int (0, 1 ó 2)                                    |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
 | caa        | Número de venas principales                                                                                            | int (0, 1, 2, 3 ó 4)                              |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| thall      | Resultado de la prueba de esfuerzo con talio. Es una codificación, pero **no se conoce el significado** de cada valor. | int (0, 1, 2 ó 3)                                 |
+| thall      | Resultado de la prueba de esfuerzo con talio. Esta prueba es para comprobar si el flujo sanguineo a traves de las arterias coronarias es normal o no. | int (0, 1, 2 ó 3)                                 |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
-| output     | Variable objetivo. Es una codificación, no se conoce el significado de cada valor. Supuesto:                           | int (0 ó 1)                                       |
+| output     | Variable objetivo. Es una codificación, no se define el significado de cada valor. Pero asumimos que :                           | int (0 ó 1)                                       |
 |            |                                                                                                                        |                                                   |
-|            | -   0, no predispuesto                                                                                                 |                                                   |
+|            | -   0, no predispuesto a tener ataque cardiaco                                                                                                |                                                   |
 |            |                                                                                                                        |                                                   |
-|            | -   1, predispuesto                                                                                                    |                                                   |
+|            | -   1, predispuesto  a tener ataque cardiaco                                                                                                    |                                                   |
 +------------+------------------------------------------------------------------------------------------------------------------------+---------------------------------------------------+
 
 Vemos que tenemos:
@@ -210,7 +212,10 @@ Ahora conocemos un poco mejor los datos, podemos responder a la pregunta. Se tra
 
 > Integración y selección de los datos de interés a analizar. Puede ser el resultado de adicionar diferentes datasets o una subselección útil de los datos originales, en base al objetivo que se quiera conseguir.
 
-La muestra no tiene un número elevado de registros que puedan dar problemas en el rendimiento. En caso de que si la hubiera, habría que ver alguna manera de limitar los datos, al menos para facilitar los cálculos en fase de desarrollo.
+
+La muestra no tiene un número elevado de registros que puedan dar problemas en el rendimiento en computación de analisis. En caso de que si la hubiera, habría que ver alguna manera de limitar los datos, al menos para facilitar los cálculos en fase de desarrollo (por ejemplo, limitar los atributos mediante PCA). 
+
+Respecto las observaciones y los datos en general, cuanto mayor observaciones tengamos, mejor nos acercaremos a los resultados y concluciones reales. Pero en nuestro caso, la muestra es pequeña. Por tanto, debemos de estudiar la muestra disponible para sacar las mejores conclusiones posibles.
 
 Organizamos y buscamos duplicados:
 
@@ -484,7 +489,7 @@ myFishertest <- function (campo) {
 
 Este método nos ofrece una tabla de frecuencias y el resultado del test de fisher que puede sacar conclusiones sobre la tabla.
 
-Si el resultado del fisher test nos da un p-value por debajo de su nivel de significación (p. ej., 0,05), se rechaza la hipótesis nula, o sea, que no hay relación entre las variables.
+Si el resultado del fisher test nos da un p-value por debajo de su nivel de significación (p. ej., 0,05), se rechaza la hipótesis nula, o sea, que hay relación entre las variables.
 
 Aplicamos el método con todas las variables categóricas:
 
@@ -499,7 +504,7 @@ myFishertest ("caa")
 myFishertest ("thall")
 myFishertest ("output")
 ```
-When your p-value is below your significance level (e.g., 0.05), reject the null hypothesis. The sample data is strong enough to conclude that a relationship between the categorical variables exists in the population. Knowing the value of one variable provides information about the value of the other variable. 
+Cuando su valor p esté por debajo de su nivel de significación (p. ej., 0,05), rechace la hipótesis nula. Los datos de la muestra son lo suficientemente fuertes como para concluir que existe una relación entre las variables categóricas en la población. Conocer el valor de una variable proporciona información sobre el valor de la otra variable.
 
 A continuación, se resume las conclusiones obtenidas en la siguiente tabla:
 
@@ -508,21 +513,21 @@ A continuación, se resume las conclusiones obtenidas en la siguiente tabla:
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | sex     | = 1.01e-06  | Sí                | Podemos ver que el 43,9% de sexo "0" tuvieron heart attack, por debajo del sexo "1" con probabilidad de 56,09%. Tambien, gracias al test, podemos confirmar que la variable sexo afecta a la variable dependiente output.                                                             |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| cp      | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadísticas anteriores.Tambien, gracias al test, podemos confirmar que la variable cp afecta a la variable dependiente output.    |
+| cp      | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en cp=2 teniendo en consideración la grafica y estadísticas anteriores.Tambien, gracias al test Fisher, podemos confirmar que la variable cp afecta a la variable dependiente output.    |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| fbs     | = 0.746     | No                | No rechazamos la hipótesis nula y, por tanto, los diferentes tipos de cps tienen más o menos la misma probabilidad de tener un ataque infarto. Tambien, gracias al test, podemos confirmar que la variable fbs no afecta a al output de la variable dependiente.                             |
+| fbs     | = 0.746     | No                | No rechazamos la hipótesis nula y, por tanto, los diferentes tipos de cps tienen más o menos la misma probabilidad de tener un ataque infarto. Tambien, gracias al test Fisher, podemos confirmar que la variable fbs no afecta a al output de la variable dependiente.                             |
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| restecg | = 0.004462  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la gráfica y estadísticas anteriores. \|   | Tambien, gracias al test, podemos confirmar que la variable restecg afecta a la variable dependiente output.
+| restecg | = 0.004462  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en restecg=1 teniendo en cuenta la gráfica y estadísticas anteriores. \|   | Tambien, gracias al test Fisher, podemos confirmar que la variable restecg afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| exng    | = 3.438e-14 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|  |Tambien, gracias al test, podemos confirmar que la variable exng afecta a la variable dependiente output.
+| exng    | = 3.438e-14 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en exng=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|  |Tambien, gracias al test Fisher, podemos confirmar que la variable exng afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| slp     | = 1.769e-11 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |Tambien, gracias al test, podemos confirmar que la variable slp afecta a la variable dependiente output.
+| slp     | = 1.769e-11 | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en slp=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |Tambien, gracias al test Fisher, podemos confirmar que la variable slp afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| caa     | \< 2.2e-16  |                   | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |Tambien, gracias al test, podemos confirmar que la variable caa afecta a la variable dependiente output.
+| caa     | \< 2.2e-16  |       Sí            | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en caa=0 teniendo en cuenta la gráfica y las estadísticas anteriores. \|   |Tambien, gracias al test Fisher, podemos confirmar que la variable caa afecta a la variable dependiente output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| thall   | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en thall=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \| |
+| thall   | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula y confirmamos de que la probabilidad de tener un ataque es más alto en thall=2 teniendo en cuenta la gráfica y las estadísticas anteriores. \| |Segun Fisher test, podemos decir que la variable thall afecta a la variable output.
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| output  | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula, como era de esperar ya que comparamos la misma variable\|         
+| output  | \< 2.2e-16  | Sí                | Rechazamos la hipótesis nula, como era de esperar ya que comparamos la misma variable\|        
 +---------+-------------+-------------------+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 ### Whitney

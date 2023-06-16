@@ -20,6 +20,7 @@ Tipología y ciclo de vida de los datos. Aula 1
 
 * **code/pra2-dcanete-bkaur.rmd**: R Markdown con la implementación del proceso de limpieza y análisis con comentarios
 * **code/pra2-dcanete-bkaur.html**: Guardado en formato HMTL del Markdown
+* **code/pra2-dcanete-bkaur.pdf**: Guardado en formato PDF del Markdown
 
 ## Ejecución
 
